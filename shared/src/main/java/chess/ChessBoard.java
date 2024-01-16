@@ -1,6 +1,6 @@
 package chess;
 
-import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A chessboard that can hold and rearrange chess pieces.
@@ -10,14 +10,42 @@ import java.util.HashMap;
  */
 public class ChessBoard {
 
-    /**
-     * HashMap that stores the board state
-     * Takes in ChessPosition and ChessPiece
-     */
-    private final HashMap<ChessPosition, ChessPiece> board;
+
+    public ChessPiece[][] squares = new ChessPiece[8][8];
 
     public ChessBoard() {
-        this.board = new HashMap<>();
+    }
+
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        ChessBoard other = (ChessBoard) obj;
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                var p1 = this.squares[i][j];
+                var p2 = other.squares[i][j];
+
+                if (p1 == null && p2 == null) {
+                    continue;
+                }
+
+                // Check if either p1 or p2 is null, but not both
+                if (p1 == null || p2 == null) {
+                    return false;
+                }
+
+                if (p1.getPieceType() != p2.getPieceType() || p1.getTeamColor() != p1.getTeamColor()) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -27,59 +55,7 @@ public class ChessBoard {
      * @param piece    the piece to add
      */
     public void addPiece(ChessPosition position, ChessPiece piece) {
-        this.board.put(position, piece);
-    }
-
-
-    private void generateNewBoard() {
-        // ----------------------PAWNS----------------------
-        // white
-        for (int i = 0; i < 8; i++) {
-            this.addPiece(new ChessPosition(6, i), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.PAWN));
-        }
-        // black
-        for (int i = 0; i < 8; i++) {
-            this.addPiece(new ChessPosition(1, i), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.PAWN));
-        }
-
-
-        // ----------------------KNIGHTS----------------------
-        // white
-        this.addPiece(new ChessPosition(0, 1), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KNIGHT));
-        this.addPiece(new ChessPosition(0, 6), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KNIGHT));
-        // black
-        this.addPiece(new ChessPosition(7, 1), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KNIGHT));
-        this.addPiece(new ChessPosition(7, 6), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.KNIGHT));
-
-
-        // ----------------------ROOKS----------------------
-        // white
-        this.addPiece(new ChessPosition(0, 0), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.ROOK));
-        this.addPiece(new ChessPosition(0, 7), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.ROOK));
-        // black
-        this.addPiece(new ChessPosition(7, 0), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.ROOK));
-        this.addPiece(new ChessPosition(7, 7), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.ROOK));
-
-
-        // ----------------------BISHOPS----------------------
-        // white
-        this.addPiece(new ChessPosition(0, 2), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.BISHOP));
-        this.addPiece(new ChessPosition(0, 5), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.BISHOP));
-        // black
-        this.addPiece(new ChessPosition(7, 2), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.BISHOP));
-        this.addPiece(new ChessPosition(7, 5), new ChessPiece(ChessGame.TeamColor.BLACK, ChessPiece.PieceType.BISHOP));
-
-        // ----------------------QUEENS----------------------
-        // white
-        this.addPiece(new ChessPosition(0, 4), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.QUEEN));
-        // black
-        this.addPiece(new ChessPosition(0, 4), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.QUEEN));
-
-        // ----------------------KINGS----------------------
-        // white
-        this.addPiece(new ChessPosition(0, 3), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KING));
-        // black
-        this.addPiece(new ChessPosition(0, 3), new ChessPiece(ChessGame.TeamColor.WHITE, ChessPiece.PieceType.KING));
+        squares[position.getRow() - 1][position.getColumn() - 1] = piece;
     }
 
     /**
@@ -89,16 +65,55 @@ public class ChessBoard {
      *                 position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        return this.board.get(position);
+        return squares[position.getRow() - 1][position.getColumn() - 1];
     }
+
+
+    final static Map<Character, ChessPiece.PieceType> charToTypeMap = Map.of(
+            'p', ChessPiece.PieceType.PAWN,
+            'n', ChessPiece.PieceType.KNIGHT,
+            'r', ChessPiece.PieceType.ROOK,
+            'q', ChessPiece.PieceType.QUEEN,
+            'k', ChessPiece.PieceType.KING,
+            'b', ChessPiece.PieceType.BISHOP);
+
 
     /**
      * Sets the board to the default starting board
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-        this.board.clear();
-        this.generateNewBoard();
+        var boardText = """
+                |r|n|b|q|k|b|n|r|
+                |p|p|p|p|p|p|p|p|
+                | | | | | | | | |
+                | | | | | | | | |
+                | | | | | | | | |
+                | | | | | | | | |
+                |P|P|P|P|P|P|P|P|
+                |R|N|B|Q|K|B|N|R|
+                """;
+        int row = 8;
+        int column = 1;
+        for (var c : boardText.toCharArray()) {
+            switch (c) {
+                case '\n' -> {
+                    column = 1;
+                    row--;
+                }
+                case ' ' -> column++;
+                case '|' -> {
+                }
+                default -> {
+                    ChessGame.TeamColor color = Character.isLowerCase(c) ? ChessGame.TeamColor.BLACK
+                            : ChessGame.TeamColor.WHITE;
+                    var type = charToTypeMap.get(Character.toLowerCase(c));
+                    var position = new ChessPosition(row, column);
+                    var piece = new ChessPiece(color, type);
+                    this.addPiece(position, piece);
+                    column++;
+                }
+            }
+        }
     }
-
 }

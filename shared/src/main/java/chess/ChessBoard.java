@@ -10,7 +10,7 @@ import java.util.HashMap;
  */
 public class ChessBoard {
 
-    private HashMap<ChessPosition, ChessPiece> board;
+    final HashMap<ChessPosition, ChessPiece> board;
     public ChessBoard() {
         this.board = new HashMap<>();
     }

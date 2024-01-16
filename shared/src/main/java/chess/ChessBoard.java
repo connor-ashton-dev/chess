@@ -1,5 +1,7 @@
 package chess;
 
+import java.util.HashMap;
+
 /**
  * A chessboard that can hold and rearrange chess pieces.
  * <p>
@@ -8,8 +10,9 @@ package chess;
  */
 public class ChessBoard {
 
+    private HashMap<ChessPosition, ChessPiece> board;
     public ChessBoard() {
-        
+        this.board = new HashMap<>();
     }
 
     /**
@@ -19,7 +22,7 @@ public class ChessBoard {
      * @param piece    the piece to add
      */
     public void addPiece(ChessPosition position, ChessPiece piece) {
-        throw new RuntimeException("Not implemented");
+        this.board.put(position, piece);
     }
 
     /**
@@ -30,7 +33,7 @@ public class ChessBoard {
      * position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        throw new RuntimeException("Not implemented");
+        return this.board.get(position);
     }
 
     /**
@@ -38,6 +41,6 @@ public class ChessBoard {
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-        throw new RuntimeException("Not implemented");
+        this.board.clear();
     }
 }

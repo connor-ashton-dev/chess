@@ -11,7 +11,7 @@ import java.util.Map;
 public class ChessBoard {
 
 
-    public ChessPiece[][] squares = new ChessPiece[8][8];
+    private final ChessPiece[][] squares = new ChessPiece[8][8];
 
     public ChessBoard() {
     }

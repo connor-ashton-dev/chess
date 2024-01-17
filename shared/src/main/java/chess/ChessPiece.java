@@ -1,5 +1,6 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -52,6 +53,66 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        throw new RuntimeException("Not implemented");
+        ArrayList<ChessMove> moves = new ArrayList<>();
+        // get the piece I need to analyze
+        var piece = board.getPiece(myPosition);
+
+        switch (piece.getPieceType()){
+            case BISHOP -> {
+               var bMoves = getBishopMoves(board, myPosition, piece);
+               moves.addAll(bMoves);
+            }
+            case null, default -> {
+               return null;
+            }
+        }
+
+        return moves;
     }
+
+
+    private Collection<ChessMove> getBishopMoves(ChessBoard board, ChessPosition pos, ChessPiece me){
+        ArrayList<ChessMove> moves = new ArrayList<>();
+
+        dfs(pos, pos, board, moves, 1, 1, me.getTeamColor());
+        dfs(pos, pos, board, moves, -1, 1, me.getTeamColor());
+        dfs(pos, pos, board, moves, 1, -1, me.getTeamColor());
+        dfs(pos, pos, board, moves, -1, -1, me.getTeamColor());
+
+        return moves;
+    }
+
+    private void dfs(ChessPosition ogPos, ChessPosition curPos, ChessBoard board, Collection<ChessMove> moves, int dr, int dc, ChessGame.TeamColor color){
+        var row = curPos.getRow();
+        var col = curPos.getColumn();
+        var nr = row + dr;
+        var nc = col + dc;
+
+        var newPos = new ChessPosition(nr, nc);
+
+        // edges
+        if (nr < 1 || nr > 8 || nc < 1 || nc > 8){
+            return;
+        }
+
+        // collisions
+        if (board.getPiece(newPos) != null){
+            // if it's an enemy we can take the square
+            var piece = board.getPiece(newPos);
+            if (piece.color != color) {
+                var newMove = new ChessMove(ogPos, newPos, null);
+                moves.add(newMove);
+            }
+            return;
+        }
+
+        // if valid update current position and moves
+        var newMove = new ChessMove(ogPos, newPos, null);
+        moves.add(newMove);
+
+        // repeat
+        dfs(ogPos, newPos, board, moves, dr, dc, color);
+    }
+
+
 }

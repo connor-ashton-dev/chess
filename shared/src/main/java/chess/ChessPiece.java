@@ -1,7 +1,8 @@
 package chess;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Objects;
 
 /**
  * Represents a single chess piece
@@ -17,6 +18,19 @@ public class ChessPiece {
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this.pieceType = type;
         this.color = pieceColor;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ChessPiece that = (ChessPiece) o;
+        return pieceType == that.pieceType && color == that.color;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pieceType, color);
     }
 
     /**
@@ -53,26 +67,141 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        ArrayList<ChessMove> moves = new ArrayList<>();
+        HashSet<ChessMove> moves = new HashSet<>();
         // get the piece I need to analyze
         var piece = board.getPiece(myPosition);
 
-        switch (piece.getPieceType()){
+        switch (piece.getPieceType()) {
             case BISHOP -> {
-               var bMoves = getBishopMoves(board, myPosition, piece);
-               moves.addAll(bMoves);
+                var bMoves = getBishopMoves(board, myPosition, piece);
+                moves.addAll(bMoves);
+            }
+            case PAWN -> {
+                var pMoves = getPawnMoves(board, myPosition, piece);
+                moves.addAll(pMoves);
             }
             case null, default -> {
-               return null;
+                return null;
             }
         }
 
         return moves;
     }
 
+// ----------------------------------------------------------PAWN STUFF -----------------------------------------
 
-    private Collection<ChessMove> getBishopMoves(ChessBoard board, ChessPosition pos, ChessPiece me){
-        ArrayList<ChessMove> moves = new ArrayList<>();
+    /**
+     * See if we are able to promote
+     *
+     * @param start og pos
+     * @param pos target pos
+     * @param me piece we are moving
+     * @param moves HashMap of moves
+     * @return true if we can promote, false if we can't
+     */
+    private boolean canPromote(ChessPosition start, ChessPosition pos, ChessPiece me, HashSet<ChessMove> moves) {
+        if (pos.getRow() == 8 || pos.getRow() == 1) {
+            for (PieceType piece : PieceType.values()) {
+                if (piece != PieceType.KING && piece != me.pieceType) {
+                    var move = new ChessMove(start, pos, piece);
+                    moves.add(move);
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * If we can promote, handle capturing and promoting
+     * @param board Game board
+     * @param pos our position
+     * @param me our piece
+     * @param moves HashMap of moves
+     * @param capture_pos position we are going to capture
+     */
+    private void handlePromote(ChessBoard board, ChessPosition pos, ChessPiece me, HashSet<ChessMove> moves, ChessPosition capture_pos) {
+        if (board.getPiece(capture_pos) != null) {
+            if (board.getPiece(capture_pos).color != me.color) {
+                boolean didPromote = canPromote(pos, capture_pos, me, moves);
+                if (!didPromote) {
+                    var newMove = new ChessMove(pos, capture_pos, null);
+                    moves.add(newMove);
+                }
+            }
+        }
+    }
+
+    /**
+     *
+     * @param board Game board
+     * @param pos Our position
+     * @param me Our piece
+     * @return HashSet of Pawn moves
+     */
+    private Collection<ChessMove> getPawnMoves(ChessBoard board, ChessPosition pos, ChessPiece me) {
+        HashSet<ChessMove> moves = new HashSet<>();
+        var direction = me.color == ChessGame.TeamColor.WHITE ? 1 : -1;
+
+        // -------------------------------- see if OOB
+        if (pos.getRow() + direction > 8 || pos.getRow() + direction < 0) {
+            return moves;
+        }
+
+        // -------------------------------- see if open space
+        var newSquare = new ChessPosition(pos.getRow() + direction, pos.getColumn());
+        var piece = board.getPiece(newSquare);
+        // if there is an open square ahead
+        if (piece == null) {
+            // can we promote?
+            boolean didPromote = canPromote(pos, newSquare, me, moves);
+            if (!didPromote) {
+                // handle initial positions (jumping 2 squares)
+                var nextPos = new ChessPosition(newSquare.getRow() + direction, newSquare.getColumn());
+                if (me.color == ChessGame.TeamColor.WHITE && pos.getRow() == 2) {
+                    if (board.getPiece(nextPos) == null){
+                        var move2 = new ChessMove(pos, nextPos, null);
+                        moves.add(move2);
+                    }
+                    var move1 = new ChessMove(pos, newSquare, null);
+                    moves.add(move1);
+                } else if (me.color == ChessGame.TeamColor.BLACK && pos.getRow() == 7) {
+                    if (board.getPiece(nextPos) == null){
+                        var move2 = new ChessMove(pos, nextPos, null);
+                        moves.add(move2);
+                    }
+                    var move1 = new ChessMove(pos, newSquare, null);
+                    moves.add(move1);
+                } else { // non-initial positions
+                    var newMove = new ChessMove(pos, newSquare, null);
+                    moves.add(newMove);
+                }
+            }
+        }
+
+        // ----------------------------- see if we can capture (up and left or right)
+        var pos_capture_left = new ChessPosition(pos.getRow() + direction, pos.getColumn() - 1);
+        var pos_capture_right = new ChessPosition(pos.getRow() + direction, pos.getColumn() + 1);
+
+        // see if those captures can make us promote
+        handlePromote(board, pos, me, moves, pos_capture_left);
+        handlePromote(board, pos, me, moves, pos_capture_right);
+
+        return moves;
+    }
+
+
+// ----------------------------------------------------------BISHOP STUFF -----------------------------------------
+
+    /**
+     * Get all Bishop moves
+     * @param board Game Board
+     * @param pos Our Position
+     * @param me Our piece
+     * @return HashSet of moves
+     */
+    private Collection<ChessMove> getBishopMoves(ChessBoard board, ChessPosition pos, ChessPiece me) {
+        HashSet<ChessMove> moves = new HashSet<>();
 
         dfs(pos, pos, board, moves, 1, 1, me.getTeamColor());
         dfs(pos, pos, board, moves, -1, 1, me.getTeamColor());
@@ -82,7 +211,18 @@ public class ChessPiece {
         return moves;
     }
 
-    private void dfs(ChessPosition ogPos, ChessPosition curPos, ChessBoard board, Collection<ChessMove> moves, int dr, int dc, ChessGame.TeamColor color){
+    /**
+     * Perform a DFS in a certain direction, handling adding moves to a HashSet
+     * @param ogPos starting position
+     * @param curPos current position
+     * @param board game board
+     * @param moves HashSet of moves
+     * @param dr direction to move in vertically
+     * @param dc direction to move in horizontally
+     * @param color which team we are on (handles captures)
+     */
+    private void dfs(ChessPosition ogPos, ChessPosition curPos, ChessBoard board, Collection<ChessMove> moves,
+                     int dr, int dc, ChessGame.TeamColor color) {
         var row = curPos.getRow();
         var col = curPos.getColumn();
         var nr = row + dr;
@@ -91,12 +231,12 @@ public class ChessPiece {
         var newPos = new ChessPosition(nr, nc);
 
         // edges
-        if (nr < 1 || nr > 8 || nc < 1 || nc > 8){
+        if (nr < 1 || nr > 8 || nc < 1 || nc > 8) {
             return;
         }
 
         // collisions
-        if (board.getPiece(newPos) != null){
+        if (board.getPiece(newPos) != null) {
             // if it's an enemy we can take the square
             var piece = board.getPiece(newPos);
             if (piece.color != color) {

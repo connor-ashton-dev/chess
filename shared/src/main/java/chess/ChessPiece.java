@@ -84,6 +84,18 @@ public class ChessPiece {
                 var kMoves = getKingMoves(board, myPosition, piece);
                 moves.addAll(kMoves);
             }
+            case QUEEN -> {
+                var qMoves = getQueenMoves(board, myPosition, piece);
+                moves.addAll(qMoves);
+            }
+            case ROOK -> {
+                var rMoves = getRookMoves(board, myPosition, piece);
+                moves.addAll(rMoves);
+            }
+            case KNIGHT -> {
+                var kMoves = getKnightMoves(board, myPosition, piece);
+                moves.addAll(kMoves);
+            }
             case null, default -> {
                 return null;
             }
@@ -92,6 +104,81 @@ public class ChessPiece {
         return moves;
     }
 
+    // ----------------------------------------------------------ROOK STUFF -----------------------------------------
+    private Collection<ChessMove> getKnightMoves(ChessBoard board, ChessPosition pos, ChessPiece me) {
+        HashSet<ChessMove> moves = new HashSet<>();
+        int[][] directions = {
+                {2, 1}, // up 2 right 1
+                {2, -1}, // up 2 left 1
+                {-2, 1}, // down 2 right 1
+                {-2, -1}, // down 2 left 1
+        };
+        for (int[] direction : directions) {
+            int dr = direction[0];
+            int dc = direction[1];
+            handleKnightMoves(pos, dr, dc, board, me, moves);
+        }
+        return moves;
+    }
+
+    private void handleKnightMoves(ChessPosition og, int dr, int dc, ChessBoard board, ChessPiece me, HashSet<ChessMove> moves){
+        int nr = og.getRow() + dr;
+        int nc = og.getColumn() + dc;
+
+        // is it in bounds?
+        if (nr < 0 || nr > 8 || nc < 0 || nc > 8){
+            return;
+        }
+
+        var newPos = new ChessPosition(nr, nc);
+        var occupiedPiece = board.getPiece(newPos);
+        var newMove = new ChessMove(og, newPos, null);
+        if (occupiedPiece == null) {
+            moves.add(newMove);
+        }else{
+            if (occupiedPiece.color != me.color){
+                moves.add(newMove);
+            }
+        }
+    }
+
+    // ----------------------------------------------------------ROOK STUFF -----------------------------------------
+    private Collection<ChessMove> getRookMoves(ChessBoard board, ChessPosition pos, ChessPiece me) {
+        HashSet<ChessMove> moves = new HashSet<>();
+        int[][] directions = {
+                {1, 0}, // up
+                {-1, 0}, // down
+                {0, -1}, // left
+                {0, 1}, // right
+        };
+        for (int[] direction : directions) {
+            int dr = direction[0];
+            int dc = direction[1];
+            dfs(pos, pos, board, moves, dr, dc, me.color);
+        }
+        return moves;
+    }
+
+    // ----------------------------------------------------------QUEEN STUFF -----------------------------------------
+    private Collection<ChessMove> getQueenMoves(ChessBoard board, ChessPosition pos, ChessPiece me) {
+        HashSet<ChessMove> moves = new HashSet<>();
+        int[][] directions = {
+                {1, 0}, // up
+                {-1, 0}, // down
+                {0, -1}, // left
+                {0, 1}, // right
+                {1, -1}, // up and left
+                {1, 1}, // up and right
+                {-1, -1}, // down and left
+                {-1, 1}, // down and right
+        };
+        for (int[] direction : directions) {
+            int dr = direction[0];
+            int dc = direction[1];
+            dfs(pos, pos, board, moves, dr, dc, me.color);
+        }
+        return moves;
+    }
 
     // ----------------------------------------------------------KING STUFF -----------------------------------------
     private Collection<ChessMove> getKingMoves(ChessBoard board, ChessPosition pos, ChessPiece me) {

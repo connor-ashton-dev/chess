@@ -104,7 +104,7 @@ public class ChessPiece {
         return moves;
     }
 
-    // ----------------------------------------------------------ROOK STUFF -----------------------------------------
+    // ----------------------------------------------------------KNIGHT STUFF -----------------------------------------
     private Collection<ChessMove> getKnightMoves(ChessBoard board, ChessPosition pos, ChessPiece me) {
         HashSet<ChessMove> moves = new HashSet<>();
         int[][] directions = {
@@ -112,6 +112,10 @@ public class ChessPiece {
                 {2, -1}, // up 2 left 1
                 {-2, 1}, // down 2 right 1
                 {-2, -1}, // down 2 left 1
+                {1, 2}, // up 1 right 2
+                {-1, 2}, // down 1 right 2
+                {1, -2}, // up 1 left 2
+                {-1, -2}, // down 1 left 2
         };
         for (int[] direction : directions) {
             int dr = direction[0];
@@ -126,7 +130,7 @@ public class ChessPiece {
         int nc = og.getColumn() + dc;
 
         // is it in bounds?
-        if (nr < 0 || nr > 8 || nc < 0 || nc > 8){
+        if (nr < 1 || nr > 8 || nc < 1 || nc > 8){
             return;
         }
 

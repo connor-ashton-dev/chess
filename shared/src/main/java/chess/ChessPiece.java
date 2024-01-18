@@ -80,6 +80,10 @@ public class ChessPiece {
                 var pMoves = getPawnMoves(board, myPosition, piece);
                 moves.addAll(pMoves);
             }
+            case KING -> {
+                var kMoves = getKingMoves(board, myPosition, piece);
+                moves.addAll(kMoves);
+            }
             case null, default -> {
                 return null;
             }
@@ -88,14 +92,64 @@ public class ChessPiece {
         return moves;
     }
 
+
+    // ----------------------------------------------------------KING STUFF -----------------------------------------
+    private Collection<ChessMove> getKingMoves(ChessBoard board, ChessPosition pos, ChessPiece me) {
+        HashSet<ChessMove> moves = new HashSet<>();
+        int[][] directions = {
+                {1, 0}, // up
+                {-1, 0}, // down
+                {0, -1}, // left
+                {0, 1}, // right
+                {1, -1}, // up and left
+                {1, 1}, // up and right
+                {-1, -1}, // down and left
+                {-1, 1}, // down and right
+        };
+
+        for (int[] direction : directions) {
+            int dr = direction[0];
+            int dc = direction[1];
+            handleKingMove(pos, dr, dc, board, me, moves);
+        }
+        return moves;
+    }
+
+    private void handleKingMove(ChessPosition og, int dr, int dc, ChessBoard board, ChessPiece me, HashSet<ChessMove> moves) {
+        int nr = og.getRow() + dr;
+        int nc = og.getColumn() + dc;
+
+        // see if new position is OOB
+        if (nr < 1 || nr > 8 || nc < 1 || nc > 8) {
+            return;
+        }
+
+        // otherwise see if anyone is there at the new position
+        var newPos = new ChessPosition(nr, nc);
+        // if empty just add it
+        if (board.getPiece(newPos) == null) {
+            var newChessMove = new ChessMove(og, newPos, null);
+            moves.add(newChessMove);
+        } else {
+            // if it's enemy team capture it
+            var piece = board.getPiece(newPos);
+            if (piece.color != me.color) {
+                var newChessMove = new ChessMove(og, newPos, null);
+                moves.add(newChessMove);
+            }
+        }
+
+    }
+
+
 // ----------------------------------------------------------PAWN STUFF -----------------------------------------
 
     /**
      * See if we are able to promote
      *
      * @param start og pos
-     * @param pos target pos
-     * @param me piece we are moving
+     * @param pos   target pos
+     * @param me    piece we are moving
      * @param moves HashMap of moves
      * @return true if we can promote, false if we can't
      */
@@ -114,10 +168,11 @@ public class ChessPiece {
 
     /**
      * If we can promote, handle capturing and promoting
-     * @param board Game board
-     * @param pos our position
-     * @param me our piece
-     * @param moves HashMap of moves
+     *
+     * @param board       Game board
+     * @param pos         our position
+     * @param me          our piece
+     * @param moves       HashMap of moves
      * @param capture_pos position we are going to capture
      */
     private void handlePromote(ChessBoard board, ChessPosition pos, ChessPiece me, HashSet<ChessMove> moves, ChessPosition capture_pos) {
@@ -133,15 +188,14 @@ public class ChessPiece {
     }
 
     /**
-     *
      * @param board Game board
-     * @param pos Our position
-     * @param me Our piece
+     * @param pos   Our position
+     * @param me    Our piece
      * @return HashSet of Pawn moves
      */
     private Collection<ChessMove> getPawnMoves(ChessBoard board, ChessPosition pos, ChessPiece me) {
         HashSet<ChessMove> moves = new HashSet<>();
-        var direction = me.color == ChessGame.TeamColor.WHITE ? 1 : -1;
+        int direction = me.color == ChessGame.TeamColor.WHITE ? 1 : -1;
 
         // -------------------------------- see if OOB
         if (pos.getRow() + direction > 8 || pos.getRow() + direction < 0) {
@@ -159,14 +213,14 @@ public class ChessPiece {
                 // handle initial positions (jumping 2 squares)
                 var nextPos = new ChessPosition(newSquare.getRow() + direction, newSquare.getColumn());
                 if (me.color == ChessGame.TeamColor.WHITE && pos.getRow() == 2) {
-                    if (board.getPiece(nextPos) == null){
+                    if (board.getPiece(nextPos) == null) {
                         var move2 = new ChessMove(pos, nextPos, null);
                         moves.add(move2);
                     }
                     var move1 = new ChessMove(pos, newSquare, null);
                     moves.add(move1);
                 } else if (me.color == ChessGame.TeamColor.BLACK && pos.getRow() == 7) {
-                    if (board.getPiece(nextPos) == null){
+                    if (board.getPiece(nextPos) == null) {
                         var move2 = new ChessMove(pos, nextPos, null);
                         moves.add(move2);
                     }
@@ -195,9 +249,10 @@ public class ChessPiece {
 
     /**
      * Get all Bishop moves
+     *
      * @param board Game Board
-     * @param pos Our Position
-     * @param me Our piece
+     * @param pos   Our Position
+     * @param me    Our piece
      * @return HashSet of moves
      */
     private Collection<ChessMove> getBishopMoves(ChessBoard board, ChessPosition pos, ChessPiece me) {
@@ -213,20 +268,21 @@ public class ChessPiece {
 
     /**
      * Perform a DFS in a certain direction, handling adding moves to a HashSet
-     * @param ogPos starting position
+     *
+     * @param ogPos  starting position
      * @param curPos current position
-     * @param board game board
-     * @param moves HashSet of moves
-     * @param dr direction to move in vertically
-     * @param dc direction to move in horizontally
-     * @param color which team we are on (handles captures)
+     * @param board  game board
+     * @param moves  HashSet of moves
+     * @param dr     direction to move in vertically
+     * @param dc     direction to move in horizontally
+     * @param color  which team we are on (handles captures)
      */
     private void dfs(ChessPosition ogPos, ChessPosition curPos, ChessBoard board, Collection<ChessMove> moves,
                      int dr, int dc, ChessGame.TeamColor color) {
-        var row = curPos.getRow();
-        var col = curPos.getColumn();
-        var nr = row + dr;
-        var nc = col + dc;
+        int row = curPos.getRow();
+        int col = curPos.getColumn();
+        int nr = row + dr;
+        int nc = col + dc;
 
         var newPos = new ChessPosition(nr, nc);
 

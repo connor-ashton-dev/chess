@@ -1,5 +1,8 @@
 package chess;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -13,9 +16,21 @@ public class ChessBoard {
 
     private final ChessPiece[][] squares = new ChessPiece[8][8];
 
-    public ChessBoard() {
-    }
+    public ChessBoard() {}
 
+    // Copy constructor
+    public ChessBoard(ChessBoard other) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                ChessPiece originalPiece = other.squares[i][j];
+                if (originalPiece != null) {
+                    this.squares[i][j] = new ChessPiece(originalPiece.getTeamColor(), originalPiece.getPieceType());
+                } else {
+                    this.squares[i][j] = null;
+                }
+            }
+        }
+    }
 
     @Override
     public boolean equals(Object obj) {
@@ -48,6 +63,18 @@ public class ChessBoard {
         return true;
     }
 
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(squares);
+    }
+
+    @Override
+    public String toString() {
+        return "ChessBoard{" +
+                "squares=" + Arrays.toString(squares) +
+                '}';
+    }
+
     /**
      * Adds a chess piece to the chessboard
      *
@@ -58,6 +85,46 @@ public class ChessBoard {
         squares[position.getRow() - 1][position.getColumn() - 1] = piece;
     }
 
+    public void removePiece(ChessPosition position) {
+        squares[position.getRow() - 1][position.getColumn() - 1] = null;
+    }
+
+    public void movePiece(ChessPosition start, ChessPosition end) {
+        ChessPiece piece = getPiece(start);
+        this.removePiece(start);
+        this.addPiece(end, piece);
+    }
+
+
+    public Collection<ChessPiece> getPieces(ChessGame.TeamColor team) {
+        HashSet<ChessPiece> pieces = new HashSet<ChessPiece>();
+
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                ChessPosition myPos = new ChessPosition(i, j);
+                ChessPiece myPiece = this.getPiece(myPos);
+                if (myPiece != null && myPiece.getTeamColor() != team) {
+                    pieces.add(myPiece);
+                }
+            }
+        }
+
+        return pieces;
+    }
+
+    public ChessPosition getPosition(ChessPiece piece) {
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPosition currentPosition = new ChessPosition(row, col);
+                ChessPiece currentPiece = this.getPiece(currentPosition);
+                if (currentPiece != null && currentPiece.equals(piece)) {
+                    return currentPosition;
+                }
+            }
+        }
+        return null; // if the piece is not found on the board
+    }
+
     /**
      * Gets a chess piece on the chessboard
      *
@@ -65,7 +132,44 @@ public class ChessBoard {
      *                 position
      */
     public ChessPiece getPiece(ChessPosition position) {
+        if (position == null) {
+            return null;
+        }
+        if (position.getRow() < 1 || position.getRow() > 8 || position.getColumn() < 1 || position.getColumn() > 8) {
+            return null;
+        }
         return squares[position.getRow() - 1][position.getColumn() - 1];
+    }
+
+
+    public Collection<ChessMove> getAllMoves(ChessGame.TeamColor color) {
+        Collection<ChessMove> allMoves = new HashSet<>();
+
+        for (int i = 1; i <= 8; i++) {
+            for (int j = 1; j <= 8; j++) {
+                ChessPosition myPos = new ChessPosition(i, j);
+                ChessPiece myPiece = this.getPiece(myPos);
+                if (myPiece != null && myPiece.getTeamColor() == color) {
+                    Collection<ChessMove> moves = myPiece.pieceMoves(this, myPos);
+                    allMoves.addAll(moves);
+                }
+            }
+        }
+
+        return allMoves;
+    }
+
+    public ChessPosition findKing(ChessGame.TeamColor color) {
+        for (int i = 1; i <= 8; i++) {
+            for (int j = 1; j <= 8; j++) {
+                ChessPosition myPos = new ChessPosition(i, j);
+                ChessPiece myPiece = this.getPiece(myPos);
+                if (myPiece != null && myPiece.getTeamColor() == color && myPiece.getPieceType() == ChessPiece.PieceType.KING) {
+                    return myPos;
+                }
+            }
+        }
+        return null;
     }
 
 

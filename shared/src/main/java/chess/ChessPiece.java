@@ -33,6 +33,7 @@ public class ChessPiece {
         return Objects.hash(pieceType, color);
     }
 
+
     /**
      * The various different chess piece options
      */
@@ -125,12 +126,12 @@ public class ChessPiece {
         return moves;
     }
 
-    private void handleKnightMoves(ChessPosition og, int dr, int dc, ChessBoard board, ChessPiece me, HashSet<ChessMove> moves){
+    private void handleKnightMoves(ChessPosition og, int dr, int dc, ChessBoard board, ChessPiece me, HashSet<ChessMove> moves) {
         int nr = og.getRow() + dr;
         int nc = og.getColumn() + dc;
 
         // is it in bounds?
-        if (nr < 1 || nr > 8 || nc < 1 || nc > 8){
+        if (nr < 1 || nr > 8 || nc < 1 || nc > 8) {
             return;
         }
 
@@ -139,8 +140,8 @@ public class ChessPiece {
         var newMove = new ChessMove(og, newPos, null);
         if (occupiedPiece == null) {
             moves.add(newMove);
-        }else{
-            if (occupiedPiece.color != me.color){
+        } else {
+            if (occupiedPiece.color != me.color) {
                 moves.add(newMove);
             }
         }
@@ -225,8 +226,10 @@ public class ChessPiece {
             // if it's enemy team capture it
             var piece = board.getPiece(newPos);
             if (piece.color != me.color) {
-                var newChessMove = new ChessMove(og, newPos, null);
-                moves.add(newChessMove);
+                if (piece.getPieceType() != PieceType.QUEEN){
+                    var newChessMove = new ChessMove(og, newPos, null);
+                    moves.add(newChessMove);
+                }
             }
         }
 

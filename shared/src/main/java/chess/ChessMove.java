@@ -30,6 +30,16 @@ public class ChessMove {
                 this.promotion == chessMove.promotion;
     }
 
+
+    @Override
+    public String toString() {
+        return "ChessMove{" +
+                "start=" + start +
+                ", end=" + end +
+                ", promotion=" + promotion +
+                '}';
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(this.start, this.end, this.promotion);
@@ -57,5 +67,9 @@ public class ChessMove {
      */
     public ChessPiece.PieceType getPromotionPiece() {
         return this.promotion;
+    }
+
+    public ChessPosition getEndPosition() {
+        return this.end;
     }
 }

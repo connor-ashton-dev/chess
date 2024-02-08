@@ -57,6 +57,7 @@ public class ChessGame {
      * @param startPosition the piece to get valid moves for
      * @return Set of valid moves for requested piece, or null if no piece at
      * startPosition
+     *
      */
 
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
@@ -194,6 +195,22 @@ public class ChessGame {
         return false;
     }
 
+    public Collection<ChessMove> allValidMoves(TeamColor teamColor, ChessBoard myBoard) {
+        Collection<ChessMove> allMoves = new HashSet<>();
+        for (int i = 1; i <= 8; i++) {
+            for (int j = 1; j <= 8; j++) {
+                ChessPosition myPos = new ChessPosition(i, j);
+                ChessPiece chessPiece = myBoard.getPiece(myPos);
+                if (chessPiece != null && chessPiece.getTeamColor() == teamColor) {
+                    Collection<ChessMove> moves = validMoves(myPos);
+                    allMoves.addAll(moves);
+                }
+            }
+        }
+
+        return allMoves;
+    }
+
 
     /**
      * Determines if the given team is in checkmate
@@ -205,11 +222,7 @@ public class ChessGame {
         if (!isInCheck(teamColor)) {
             return false; // Not in checkmate if not in check
         }
-
-        ChessPosition kingPosition = board.findKing(teamColor);
-        Collection<ChessMove> validMoves = validMoves(kingPosition);
-
-        return validMoves.isEmpty();
+        return allValidMoves(teamColor, board).isEmpty();
     }
 
     /**
@@ -220,14 +233,11 @@ public class ChessGame {
      * @return True if the specified team is in stalemate, otherwise false
      */
     public boolean isInStalemate(TeamColor teamColor) {
-        ChessPosition kingPos = board.findKing(teamColor);
-        Collection<ChessMove> validMoves = validMoves(kingPos);
-
         if (isInCheck(teamColor)){
            return false;
         }
 
-        return validMoves.isEmpty();
+        return allValidMoves(teamColor, board).isEmpty();
     }
 
     /**

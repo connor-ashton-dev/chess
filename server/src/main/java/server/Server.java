@@ -24,7 +24,6 @@ public class Server {
     public Server(){
         GameDAO gDao = new GameDAO();
         UserDAO uDAO = new UserDAO();
-//        AuthDAO aDAO = new AuthDAO();
 
         gameService = new GameService(gDao);
         userService = new UserService(uDAO);
@@ -73,7 +72,7 @@ public class Server {
             res.status(200);
             return "{}";
         } catch (DataAccessException err) {
-            return dbErrors(err, req, res);
+            return dbErrors(err, res);
         }
     }
 
@@ -95,7 +94,7 @@ public class Server {
 
             return jsonResponse;
         } catch (DataAccessException err) {
-            return dbErrors(err, req, res);
+            return dbErrors(err, res);
         }
     }
 
@@ -115,7 +114,7 @@ public class Server {
             res.status(200);
             return "{}";
         } catch (DataAccessException err) {
-            return dbErrors(err, req, res);
+            return dbErrors(err, res);
         }
     }
 
@@ -132,7 +131,7 @@ public class Server {
             res.status(200);
             return getObjFromJSon(Collections.singletonMap("games", gameHelperData));
         } catch (DataAccessException err) {
-            return dbErrors(err, req, res);
+            return dbErrors(err,res);
         }
     }
 
@@ -146,7 +145,7 @@ public class Server {
             res.body(getObjFromJSon(tok));
             return getObjFromJSon(tok);
         } catch (DataAccessException err) {
-            return dbErrors(err, req, res);
+            return dbErrors(err, res);
         }
     }
 
@@ -164,7 +163,7 @@ public class Server {
         return new Gson().toJson(obj);
     }
 
-    private Object dbErrors(DataAccessException err, Request req, Response res) {
+    private Object dbErrors(DataAccessException err, Response res) {
         int status;
         var body = getErrorFromJson(err.getMessage());
         System.out.println(body);
@@ -200,7 +199,7 @@ public class Server {
             res.status(200);
             return getObjFromJSon(Collections.singletonMap("gameID", game.getGameId()));
         } catch (DataAccessException err) {
-            return dbErrors(err, req, res);
+            return dbErrors(err, res);
         }
     }
 

@@ -20,9 +20,11 @@ class GameServiceTest {
     UserData user;
     GameService gameService;
 
+    // data to use in tests
     GameData newGame = new GameData(240, "", "", "", null);
 
     @BeforeEach
+    // prep the memory of the tests
     void prep() {
         user = new UserData("u", "p", "e");
 

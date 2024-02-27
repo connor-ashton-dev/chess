@@ -21,6 +21,7 @@ class AuthServiceTest {
     }
 
     @Test
+    // test for a good login
     void loginGood() {
         var testUser = new UserData("u", "p", "e");
         var authService = new AuthService(dao);
@@ -36,6 +37,7 @@ class AuthServiceTest {
     }
 
     @Test
+    // test for bad login
     void loginUserNotFound(){
         var testUser = new UserData("u", null, "e");
         var authService = new AuthService(dao);
@@ -44,6 +46,7 @@ class AuthServiceTest {
     }
 
     @Test
+    // test for good logout
     void logoutGood() {
         var testUser = new UserData("u", "p", "e");
         var authService = new AuthService(dao);
@@ -58,6 +61,7 @@ class AuthServiceTest {
 
 
     @Test
+    // test for bad logout
     void logoutBad(){
         var authService = new AuthService(dao);
         var authToken = new AuthData("username");

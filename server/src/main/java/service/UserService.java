@@ -17,7 +17,4 @@ public class UserService {
     public AuthData login(UserData user) throws DataAccessException{
         return dao.loginUser(user);
     }
-    public void logout(AuthData auth) throws DataAccessException{
-        dao.logoutUser(auth);
-    }
 }

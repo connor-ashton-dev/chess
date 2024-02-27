@@ -81,7 +81,7 @@ public class Server {
         var myUser = new Gson().fromJson(req.body(), UserData.class);
         AuthData tok;
         try {
-            tok = userService.login(myUser);
+            tok = authService.login(myUser);
             res.status(200);
 
             Map<String, Object> response = new HashMap<>();

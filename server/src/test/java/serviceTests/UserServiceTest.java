@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class UserServiceTest {
     UserDAO dao;
     @BeforeEach
+    // prep mem
     void prep(){
         dao = new UserDAO();
         MemObj.MemClear();
@@ -42,6 +43,7 @@ class UserServiceTest {
         var testUser = new UserData("u", null, "e");
         var authService = new AuthService(dao);
         var err = assertThrows(DataAccessException.class, () -> authService.login(testUser));
+        // maybe i'll change the error messages to be easier to type one day haha
         assertTrue(err.getMessage().toLowerCase().contains("unauthorized"));
     }
 

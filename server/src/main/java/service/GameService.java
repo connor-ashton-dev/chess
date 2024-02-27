@@ -31,11 +31,4 @@ public class GameService {
         dao.joinGame(tok, targetGame);
     }
 
-    public void updateGame(AuthData tok, GameData toUpdate, int ogGameId) throws DataAccessException {
-        dao.updateGame(tok, toUpdate, ogGameId);
-    }
-
-    public GameData getGame(AuthData tok, int id) throws DataAccessException {
-        return dao.getGame(tok, id);
-    }
 }

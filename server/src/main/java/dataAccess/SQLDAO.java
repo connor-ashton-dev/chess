@@ -5,15 +5,17 @@ import model.AuthData;
 import model.GameData;
 import model.UserData;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 
+import static java.sql.Types.NULL;
 
-public class SQLDao implements DBInterface {
-    private static SQLDao DBInstance;
 
-    private String[] createMyStuff = {
+public class SQLDAO implements DBInterface {
+    private static SQLDAO DBInstance;
+
+    private final String[] createMyStuff = {
             """
           create database if not exists %DB_NAME%;
           """,
@@ -58,15 +60,15 @@ public class SQLDao implements DBInterface {
             ChessGame.parseFromString(rs.getString(3), ChessGame.TeamColor.values()[rs.getInt(4)])
     );
 
-    public SQLDao() throws DataAccessException {
+    public SQLDAO() throws DataAccessException {
         startDB();
     }
 
 
-    public static SQLDao getInstance() {
+    public static SQLDAO getInstance() {
         if (DBInstance != null) return DBInstance;
         try {
-            DBInstance = new SQLDao();
+            DBInstance = new SQLDAO();
         } catch (Exception err) {
             System.out.println(err.getMessage());
         }
@@ -91,6 +93,45 @@ public class SQLDao implements DBInterface {
         } catch (SQLException err) {
             System.out.println("ERROR OCCURRED IN [startDB]: " + err.getMessage());
         }
+    }
+
+
+    private <T> ArrayList<T> dbExecute(String action, Adapter<T> adapter, Object... params) throws DataAccessException {
+        try {
+            var preparedAction = getPreparedStatement(action, params);
+
+            var results = new ArrayList<T>();
+            var response = preparedAction.executeQuery();
+            while (response.next()) {
+                results.add(adapter.getClass(response));
+            }
+
+            return results;
+        } catch (SQLException e) {
+            System.out.println("ERROR IN [dbExecute] " + e.getMessage());
+            throw new DataAccessException(e.getMessage());
+        }
+    }
+
+    private record DBTuple(int numAffectedRows, int generatedID) {
+    }
+    private static PreparedStatement getPreparedStatement(String action, Object[] params) throws DataAccessException, SQLException {
+        var conn = DatabaseManager.getConnection();
+        var preparedAction = conn.prepareStatement(action, Statement.RETURN_GENERATED_KEYS);
+
+        for (var i = 0; i < params.length; i++) {
+            var p = params[i];
+
+            switch (p) {
+                case null -> preparedAction.setNull(i + 1, NULL);
+                case Integer integer -> preparedAction.setInt(i + 1, integer);
+                case String s -> preparedAction.setString(i + 1, s);
+                default -> {
+                    //idk
+                }
+            }
+        }
+        return preparedAction;
     }
 
     @Override

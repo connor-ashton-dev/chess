@@ -10,7 +10,7 @@ public class DatabaseManager {
     private static final String connectionUrl;
 
 
-    public static String getDatabaseName(){
+    public static String getDatabaseName() {
         return databaseName;
     }
 
@@ -41,11 +41,14 @@ public class DatabaseManager {
     static void createDatabase() throws DataAccessException {
         try {
             var statement = "CREATE DATABASE IF NOT EXISTS " + databaseName;
+            System.out.println("got conn");
             var conn = DriverManager.getConnection(connectionUrl, user, password);
             try (var preparedStatement = conn.prepareStatement(statement)) {
                 preparedStatement.executeUpdate();
             }
+
         } catch (SQLException e) {
+            System.out.println(e.getMessage());
             throw new DataAccessException(e.getMessage());
         }
     }
@@ -64,6 +67,8 @@ public class DatabaseManager {
      */
     public static Connection getConnection() throws DataAccessException {
         try {
+            createDatabase();
+            System.out.println("CREATED");
             var conn = DriverManager.getConnection(connectionUrl, user, password);
             conn.setCatalog(databaseName);
             return conn;

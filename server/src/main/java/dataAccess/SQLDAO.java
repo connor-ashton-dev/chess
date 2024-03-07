@@ -52,13 +52,13 @@ public class SQLDAO implements DBInterface {
     }
 
     private final Adapter<GameData> gameDataAdapter=rs -> new GameData(
-            rs.getInt(1),
-            rs.getString(5),
-            rs.getString(6),
-            rs.getString(2),
+            rs.getInt("id"),
+            rs.getString("whitePlayer"),
+            rs.getString("blackPlayer"),
+            rs.getString("name"),
             ChessGame.parseFromString(
-                    rs.getString(3),
-                    ChessGame.TeamColor.values()[rs.getInt(4)]
+                    rs.getString("game"),
+                    ChessGame.TeamColor.values()[rs.getInt("currentTurn")]
             )
     );
 
@@ -156,7 +156,7 @@ public class SQLDAO implements DBInterface {
         try {
             var con = DatabaseManager.getConnection();
             var action = changeSQLActionINfo("select username from %DB_NAME%.authTokens where authToken=?;");
-            Adapter<AuthData> tokenAdapter = rs -> new AuthData(tok.getAuthToken(), rs.getString(1));
+            Adapter<AuthData> tokenAdapter = rs -> new AuthData(rs.getString(1), tok.getAuthToken());
             var res = dbExecute(action, tokenAdapter, tok.getAuthToken());
             return res.isEmpty() ? null : res.getFirst();
         }catch (DataAccessException e){
@@ -244,15 +244,14 @@ public class SQLDAO implements DBInterface {
 
         var whiteUsername = target.getWhiteUsername();
         var blackUsername = target.getBlackUsername();
+        System.out.printf("White is :%s and black is :%s\n\n", whiteUsername, blackUsername);
         var nullUserToReplace = game.getBlackUsername() != null ? blackUsername : whiteUsername;
 
-        if (nullUserToReplace != null && !nullUserToReplace.isEmpty()) throw new DataAccessException("already taken");
+        if (nullUserToReplace != null && !nullUserToReplace.equals("")) throw new DataAccessException("already taken");
 
-        if (game.getWhiteUsername() == null || game.getWhiteUsername().isEmpty()) blackUsername = username;
-        else whiteUsername = username;
-
+        if (game.getWhiteUsername() == null || game.getWhiteUsername().equals("")) blackUsername=username;
+        else whiteUsername=username;
         var updateStatement = changeSQLActionINfo("update %DB_NAME%.games set whitePlayer = ?, blackPlayer = ? where id = ?;");
-        System.out.println(whiteUsername + " " + blackUsername + " " + game.getGameId());
 
         dbUpdate(updateStatement, whiteUsername, blackUsername, game.getGameId());
     }

@@ -160,17 +160,45 @@ public class SQLDAO implements DBInterface {
     @Override
     public void clear() throws DataAccessException {
         var tables = new String[]{"games", "users", "authTokens"};
-
+        for (var table : tables) {
+            var action = changeSQLActionINfo("truncate %DB_NAME%" + table);
+            dbUpdate(action);
+        }
     }
 
     @Override
     public AuthData insertUser(UserData newUser) throws DataAccessException {
-        return null;
+        if (newUser == null) throw new DataAccessException("bad request");
+        if (newUser.getPassword() == null || newUser.getUsername() == null || newUser.getEmail() == null) {
+            throw new DataAccessException("bad request");
+        }
+
+        var action = changeSQLActionINfo("insert into %DB_NAME%.users values(?,?,?);");
+        try {
+            dbUpdate(action, newUser.getUsername(), newUser.getPassword(), newUser.getEmail());
+        } catch (DataAccessException e) {
+            var dup = e.getMessage().contains("Duplicate");
+            if (dup) throw new DataAccessException("error: username already taken");
+            throw e;
+        }
+
+        return loginUser(newUser);
     }
 
     @Override
     public AuthData loginUser(UserData myUser) throws DataAccessException {
-        return null;
+        if (myUser == null) throw new DataAccessException("bad request");
+
+        var userAction = changeSQLActionINfo("select (username) from %DB_NAME%.users where username=? and password=?;");
+        Adapter<AuthData> userAdapter = rs -> new AuthData(rs.getString(1));
+        var res = dbExecute(userAction, userAdapter, myUser.getUsername(), myUser.getPassword());
+        if (res.isEmpty()) throw new DataAccessException("unauthorized");
+
+        var tok = res.getFirst();
+
+        var insertTokAction = changeSQLActionINfo("insert into %DB_NAME%.authTokens values (?, ?);");
+        dbUpdate(insertTokAction, tok.getUsername(), tok.getAuthToken());
+        return tok;
     }
 
     @Override

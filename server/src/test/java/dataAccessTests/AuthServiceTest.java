@@ -1,11 +1,9 @@
-package serviceTests;
+package dataAccessTests;
 
 import dataAccess.DataAccessException;
-import dataAccess.MemObj;
 import dataAccess.SQLDAO;
 import model.AuthData;
 import model.UserData;
-import org.eclipse.jetty.server.Authentication;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import service.AuthService;
@@ -13,22 +11,22 @@ import service.UserService;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-
-class UserServiceTest {
+class AuthServiceTest {
     SQLDAO dao;
 
     @BeforeEach
-        // prep mem
     void prep() {
         try {
+
             dao = new SQLDAO();
             dao.clear();
-        } catch (Exception err) {
-            System.out.println("err:" + err);
+        } catch (Exception e) {
+            System.out.println("err" + e);
         }
     }
 
     @Test
+        // test for a good login
     void loginGood() {
         var testUser = new UserData("u", "p", "e");
         var authService = new AuthService(dao);
@@ -44,15 +42,16 @@ class UserServiceTest {
     }
 
     @Test
+        // test for bad login
     void loginUserNotFound() {
         var testUser = new UserData("u", null, "e");
         var authService = new AuthService(dao);
         var err = assertThrows(DataAccessException.class, () -> authService.login(testUser));
-        // maybe i'll change the error messages to be easier to type one day haha
         assertTrue(err.getMessage().toLowerCase().contains("unauthorized"));
     }
 
     @Test
+        // test for good logout
     void logoutGood() {
         var testUser = new UserData("u", "p", "e");
         var authService = new AuthService(dao);
@@ -67,6 +66,7 @@ class UserServiceTest {
 
 
     @Test
+        // test for bad logout
     void logoutBad() {
         var authService = new AuthService(dao);
         var authToken = new AuthData("username");

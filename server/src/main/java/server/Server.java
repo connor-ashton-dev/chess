@@ -17,9 +17,10 @@ public class Server {
     GameService gameService;
     UserService userService;
     AuthService authService;
+    SQLDAO dao;
     public Server(){
         try{
-            SQLDAO dao = new SQLDAO();
+            dao = new SQLDAO();
             gameService = new GameService(dao);
             userService = new UserService(dao);
             authService = new AuthService(dao);
@@ -181,12 +182,14 @@ public class Server {
     }
 
     private Object deleteData(Request req, Response res) {
-        MemObj.userMap.clear();
-        MemObj.games.clear();
-        MemObj.tokens.clear();
-        res.status(200);
-        res.body("{}");
-        return "{}";
+        try{
+            dao.clear();
+            res.status(200);
+            res.body("{}");
+            return "{}";
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Object createGame(Request req, Response res) {

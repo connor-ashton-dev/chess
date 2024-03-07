@@ -21,7 +21,7 @@ class AuthServiceTest {
         try {
 
             dao = new SQLDAO();
-            MemObj.MemClear();
+            dao.clear();
         } catch (Exception e) {
             System.out.println("err" + e);
         }

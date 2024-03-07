@@ -22,7 +22,7 @@ class UserServiceTest {
     void prep() {
         try {
             dao = new SQLDAO();
-            MemObj.MemClear();
+            dao.clear();
         } catch (Exception err) {
             System.out.println("err:" + err);
         }

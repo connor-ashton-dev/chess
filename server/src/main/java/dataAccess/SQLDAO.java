@@ -101,40 +101,41 @@ public class SQLDAO implements DBInterface {
     }
 
     private <T> ArrayList<T> dbExecute(String action, Adapter<T> adapter, Object... params) throws DataAccessException {
-        try {
-            var preparedAction = getPreparedStatement(action, params);
+        ArrayList<T> results = new ArrayList<>();
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement preparedAction = getPreparedStatement(conn, action, params);
+             ResultSet response = preparedAction.executeQuery()) {
 
-            var results = new ArrayList<T>();
-            var response = preparedAction.executeQuery();
             while (response.next()) {
                 results.add(adapter.getClass(response));
             }
-
-            return results;
         } catch (SQLException e) {
             System.out.println("ERROR IN [dbExecute] " + e.getMessage());
             throw new DataAccessException(e.getMessage());
         }
+        return results;
     }
 
-
     private DBResponse dbUpdate(String action, Object... params) throws DataAccessException {
-        try {
-            var preparedAction = getPreparedStatement(action, params);
-            var numAffected = preparedAction.executeUpdate();
-            var id = 0;
-            var response = preparedAction.getGeneratedKeys();
-            if (response.next()) id = response.getInt(1);
-            return new DBResponse(numAffected, id);
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement preparedAction = getPreparedStatement(conn, action, params)) {
 
+            int numAffected = preparedAction.executeUpdate();
+            int id = 0;
+
+            try (ResultSet response = preparedAction.getGeneratedKeys()) {
+                if (response.next()) {
+                    id = response.getInt(1);
+                }
+            }
+
+            return new DBResponse(numAffected, id);
         } catch (SQLException e) {
             System.out.println("ERROR IN [dbUpdate] " + e.getMessage());
             throw new DataAccessException(e.getMessage());
         }
     }
-
-    private static PreparedStatement getPreparedStatement(String action, Object[] params) throws DataAccessException, SQLException {
-        var conn = DatabaseManager.getConnection();
+    private static PreparedStatement getPreparedStatement(Connection conn, String action, Object[] params) throws DataAccessException, SQLException {
         var preparedAction = conn.prepareStatement(action, Statement.RETURN_GENERATED_KEYS);
 
         for (var i = 0; i < params.length; i++) {
@@ -168,7 +169,7 @@ public class SQLDAO implements DBInterface {
     public void clear() throws DataAccessException {
         var tables = new String[]{"games", "users", "authTokens"};
         for (var table : tables) {
-            var action = changeSQLActionINfo("truncate %DB_NAME%" + table);
+            var action = changeSQLActionINfo("truncate %DB_NAME%." + table);
             dbUpdate(action);
         }
     }

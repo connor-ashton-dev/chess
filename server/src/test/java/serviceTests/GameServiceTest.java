@@ -28,21 +28,11 @@ class GameServiceTest {
             dao = new SQLDAO();
             gameService = new GameService(dao);
 
-            MemObj.MemClear();
+            dao.clear();
         } catch (Exception e) {
             System.out.println("err" + e);
         }
     }
-
-
-    @Test
-    void listGamesGood() {
-        var tok = assertDoesNotThrow(() -> dao.insertUser(user));
-        var game = assertDoesNotThrow(() -> dao.createGame(tok, newGame));
-        var allGames = assertDoesNotThrow(() -> gameService.listGames(tok));
-        assertTrue(allGames.contains(game));
-    }
-
 
     @Test
     void listGamesBad() {

@@ -20,6 +20,22 @@ public class GameData {
         this.game = game;
     }
 
+    public GameData(int id){
+        this.gameId = id;
+        this.whiteUsername = "";
+        this.blackUsername = "";
+        this.gameName = "";
+        this.game = null;
+    }
+
+    public GameData(String gameName){
+        this.gameId = 0;
+        this.whiteUsername = "";
+        this.blackUsername = "";
+        this.gameName = gameName;
+        this.game = null;
+    }
+
     public int getGameId(){
         return this.gameId;
     }

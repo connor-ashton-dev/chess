@@ -1,13 +1,63 @@
 package dataAccess;
 
+import chess.ChessGame;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.List;
 
 
 public class SQLDao implements DBInterface {
     private static SQLDao DBInstance;
+    private final DatabaseManager database = new DatabaseManager();
+
+    private String[] createMyStuff = {
+            """
+          create database if not exists %DB_NAME%;
+          """,
+            """
+          create table if not exists %DB_NAME%.games (
+            id int not null auto_increment,
+            name varchar(256) not null,
+            game char(64) not null,
+            currentTurn int not null,
+            whitePlayer varchar(256),
+            blackPlayer varchar(256),
+            primary key (id)
+          );
+          """,
+            """
+          create table if not exists %DB_NAME%.users (
+            username varchar(256) not null unique,
+            password varchar(256) not null,
+            email varchar(256) not null,
+            primary key (username)
+          );
+          """,
+            """
+          create table if not exists %DB_NAME%.authTokens (
+            username varchar(256) not null,
+            authToken char(36) not null,
+            primary key (authToken),
+            index(username)
+          );
+          """
+    };
+
+    private interface Adapter<T> {
+        T getClass(ResultSet rs) throws SQLException;
+    }
+
+    private final Adapter<GameData> gameDataAdapter = rs -> new GameData(
+            rs.getInt(1),
+            rs.getString(5),
+            rs.getString(6),
+            rs.getString(2),
+            ChessGame.parseFromString(rs.getString(3), ChessGame.TeamColor.values()[rs.getInt(4)])
+    );
 
 
     @Override

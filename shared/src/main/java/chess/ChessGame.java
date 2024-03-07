@@ -23,6 +23,14 @@ public class ChessGame {
         turn = TeamColor.WHITE;
     }
 
+
+    public static ChessGame parseFromString(String gameString, TeamColor curTurn) {
+        var game = new ChessGame();
+        game.setTeamTurn(curTurn);
+        game.setBoard(ChessBoard.parseFromString(gameString));
+        return game;
+    }
+
     /**
      * @return Which team's turn it is
      */

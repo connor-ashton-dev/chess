@@ -32,6 +32,17 @@ public class ChessBoard {
         }
     }
 
+    public static ChessBoard parseFromString(String gameString) {
+        ChessBoard board = new ChessBoard();
+        for (int i = 0; i < 8; i++){
+            for (int j = 0; j < 8; j++){
+                var piece = ChessPiece.parseFromString(gameString.charAt(i * 8 + j));
+                board.addPiece(new ChessPosition(i, j), piece);
+            }
+        }
+        return board;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

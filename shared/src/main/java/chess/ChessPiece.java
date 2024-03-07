@@ -67,6 +67,29 @@ public class ChessPiece {
      *
      * @return Collection of valid moves
      */
+
+
+    public static ChessPiece parseFromString(char piece) {
+        ChessPiece newPiece;
+
+        switch (piece) {
+            case 'B' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.BISHOP);
+            case 'K' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.KING);
+            case 'Q' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.QUEEN);
+            case 'P' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.PAWN);
+            case 'k' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.KING);
+            case 'q' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.QUEEN);
+            case 'N' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.KNIGHT);
+            case 'R' -> newPiece=new ChessPiece(ChessGame.TeamColor.WHITE, PieceType.ROOK);
+            case 'p' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.PAWN);
+            case 'r' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.ROOK);
+            case 'n' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.KNIGHT);
+            case 'b' -> newPiece=new ChessPiece(ChessGame.TeamColor.BLACK, PieceType.BISHOP);
+            default -> newPiece=null;
+        }
+
+        return newPiece;
+    }
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         HashSet<ChessMove> moves = new HashSet<>();
         // get the piece I need to analyze

@@ -113,8 +113,24 @@ public class SQLDAO implements DBInterface {
         }
     }
 
-    private record DBTuple(int numAffectedRows, int generatedID) {
+    private record DBResponse(int numAffectedRows, int generatedID) {
     }
+
+    private DBResponse dbUpdate(String action, Object... params) throws DataAccessException {
+        try {
+            var preparedAction = getPreparedStatement(action, params);
+            var numAffected = preparedAction.executeUpdate();
+            var id = 0;
+            var response = preparedAction.getGeneratedKeys();
+            if (response.next()) id = response.getInt(1);
+            return new DBResponse(numAffected, id);
+
+        } catch (SQLException e) {
+            System.out.println("ERROR IN [dbUpdate] " + e.getMessage());
+            throw new DataAccessException(e.getMessage());
+        }
+    }
+
     private static PreparedStatement getPreparedStatement(String action, Object[] params) throws DataAccessException, SQLException {
         var conn = DatabaseManager.getConnection();
         var preparedAction = conn.prepareStatement(action, Statement.RETURN_GENERATED_KEYS);
@@ -134,8 +150,16 @@ public class SQLDAO implements DBInterface {
         return preparedAction;
     }
 
+    private AuthData getAuthUser(AuthData tok) throws DataAccessException {
+        var action = changeSQLActionINfo("select username from %DB_NAME%.authTokens where authToken=?");
+        Adapter<AuthData> tokenAdapter = rs -> new AuthData(tok.getAuthToken(), rs.getString(1));
+        var res = dbExecute(action, tokenAdapter, tok.getAuthToken());
+        return res.isEmpty() ? null : res.getFirst();
+    }
+
     @Override
     public void clear() throws DataAccessException {
+        var tables = new String[]{"games", "users", "authTokens"};
 
     }
 

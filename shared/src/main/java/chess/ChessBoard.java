@@ -48,7 +48,7 @@ public class ChessBoard {
         for (int i = 0; i < 8; i++){
             for (int j = 0; j < 8; j++){
                 var piece = ChessPiece.parseFromString(gameString.charAt(i * 8 + j));
-                board.addPiece(new ChessPosition(i, j), piece);
+                board.addPiece(new ChessPosition(i + 1, j + 1), piece);
             }
         }
         return board;

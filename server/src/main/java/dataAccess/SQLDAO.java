@@ -12,7 +12,7 @@ import java.util.List;
 import static java.sql.Types.NULL;
 
 
-public class SQLDAO implements DBInterface{
+public class SQLDAO implements DBInterface {
     private static SQLDAO DBInstance;
 
     private final String[] createMyStuff = {
@@ -23,7 +23,7 @@ public class SQLDAO implements DBInterface{
           create table if not exists %DB_NAME%.games (
             id int not null auto_increment,
             name varchar(256) not null,
-            game char(64) not null,
+            game TEXT not null,
             currentTurn int not null,
             whitePlayer varchar(256),
             blackPlayer varchar(256),
@@ -45,23 +45,24 @@ public class SQLDAO implements DBInterface{
             primary key (authToken),
             index(username)
           );
-          """
-    };
+          """};
 
     private interface Adapter<T> {
         T getClass(ResultSet rs) throws SQLException;
     }
 
-    private final Adapter<GameData> gameDataAdapter = rs -> new GameData(
+    private final Adapter<GameData> gameDataAdapter=rs -> new GameData(
             rs.getInt(1),
             rs.getString(5),
             rs.getString(6),
             rs.getString(2),
-            ChessGame.parseFromString(rs.getString(3), ChessGame.TeamColor.values()[rs.getInt(4)])
+            ChessGame.parseFromString(
+                    rs.getString(3),
+                    ChessGame.TeamColor.values()[rs.getInt(4)]
+            )
     );
 
-
-    public SQLDAO() throws DataAccessException{
+    public SQLDAO() throws DataAccessException {
         startDB();
     }
 
@@ -96,6 +97,8 @@ public class SQLDAO implements DBInterface{
         }
     }
 
+    private record DBResponse(int numAffectedRows, int generatedID) {
+    }
 
     private <T> ArrayList<T> dbExecute(String action, Adapter<T> adapter, Object... params) throws DataAccessException {
         try {
@@ -114,8 +117,6 @@ public class SQLDAO implements DBInterface{
         }
     }
 
-    private record DBResponse(int numAffectedRows, int generatedID) {
-    }
 
     private DBResponse dbUpdate(String action, Object... params) throws DataAccessException {
         try {
@@ -152,10 +153,15 @@ public class SQLDAO implements DBInterface{
     }
 
     private AuthData getAuthUser(AuthData tok) throws DataAccessException {
-        var action = changeSQLActionINfo("select username from %DB_NAME%.authTokens where authToken=?");
-        Adapter<AuthData> tokenAdapter = rs -> new AuthData(tok.getAuthToken(), rs.getString(1));
-        var res = dbExecute(action, tokenAdapter, tok.getAuthToken());
-        return res.isEmpty() ? null : res.getFirst();
+        try {
+            var con = DatabaseManager.getConnection();
+            var action = changeSQLActionINfo("select username from %DB_NAME%.authTokens where authToken=?;");
+            Adapter<AuthData> tokenAdapter = rs -> new AuthData(tok.getAuthToken(), rs.getString(1));
+            var res = dbExecute(action, tokenAdapter, tok.getAuthToken());
+            return res.isEmpty() ? null : res.getFirst();
+        }catch (DataAccessException e){
+            throw new DataAccessException(e.getMessage());
+        }
     }
 
     @Override
@@ -246,6 +252,7 @@ public class SQLDAO implements DBInterface{
         else whiteUsername = username;
 
         var updateStatement = changeSQLActionINfo("update %DB_NAME%.games set whitePlayer = ?, blackPlayer = ? where id = ?;");
+        System.out.println(whiteUsername + " " + blackUsername + " " + game.getGameId());
 
         dbUpdate(updateStatement, whiteUsername, blackUsername, game.getGameId());
     }
@@ -269,15 +276,15 @@ public class SQLDAO implements DBInterface{
 
     @Override
     public GameData createGame(AuthData tok, GameData game) throws DataAccessException {
-      tok = checkTokInDB(tok);
-      if (game == null) throw new DataAccessException("unauthorized");
+        tok = checkTokInDB(tok);
+        if (game == null) throw new DataAccessException("unauthorized");
 
-      var action = changeSQLActionINfo("insert into %DB_NAME%.games (name, game, currentTurn, whitePlayer, blackPlayer) values (?, ?, 0, ?, ?);");
-      var target = new ChessGame();
-      target.getBoard().resetBoard();
+        var action = changeSQLActionINfo("insert into %DB_NAME%.games (name, game, currentTurn, whitePlayer, blackPlayer) values (?, ?, 0, ?, ?);");
+        var target = new ChessGame();
+        target.getBoard().resetBoard();
 
-      var tup = dbUpdate(action, game.getGameName(), target.serialize(), game.getWhiteUsername(), game.getBlackUsername());
-      return new GameData(tup.generatedID, game.getWhiteUsername(), game.getBlackUsername(), game.getGameName(), new ChessGame());
+        var tup = dbUpdate(action, game.getGameName(), target.serialize(), game.getWhiteUsername(), game.getBlackUsername());
+        return new GameData(tup.generatedID, game.getWhiteUsername(), game.getBlackUsername(), game.getGameName(), new ChessGame());
     }
 
 

@@ -9,6 +9,11 @@ public class DatabaseManager {
     private static final String password;
     private static final String connectionUrl;
 
+
+    public static String getDatabaseName(){
+        return databaseName;
+    }
+
     /*
      * Load the database information for the db.properties file.
      */
@@ -57,7 +62,7 @@ public class DatabaseManager {
      * }
      * </code>
      */
-    static Connection getConnection() throws DataAccessException {
+    public static Connection getConnection() throws DataAccessException {
         try {
             var conn = DriverManager.getConnection(connectionUrl, user, password);
             conn.setCatalog(databaseName);

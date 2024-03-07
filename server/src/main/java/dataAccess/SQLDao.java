@@ -12,7 +12,6 @@ import java.util.List;
 
 public class SQLDao implements DBInterface {
     private static SQLDao DBInstance;
-    private final DatabaseManager database = new DatabaseManager();
 
     private String[] createMyStuff = {
             """
@@ -59,6 +58,40 @@ public class SQLDao implements DBInterface {
             ChessGame.parseFromString(rs.getString(3), ChessGame.TeamColor.values()[rs.getInt(4)])
     );
 
+    public SQLDao() throws DataAccessException {
+        startDB();
+    }
+
+
+    public static SQLDao getInstance() {
+        if (DBInstance != null) return DBInstance;
+        try {
+            DBInstance = new SQLDao();
+        } catch (Exception err) {
+            System.out.println(err.getMessage());
+        }
+        return DBInstance;
+    }
+
+
+    private String changeSQLActionINfo(String action) {
+        return action.replace("%DB_NAME%", DatabaseManager.getDatabaseName());
+    }
+
+
+    private void startDB() throws DataAccessException {
+        try {
+            var connection = DatabaseManager.getConnection();
+            for (var action : createMyStuff) {
+                action = changeSQLActionINfo(action);
+                var sqlStatement = connection.prepareStatement(action);
+                sqlStatement.execute();
+            }
+
+        } catch (SQLException err) {
+            System.out.println("ERROR OCCURRED IN [startDB]: " + err.getMessage());
+        }
+    }
 
     @Override
     public void clear() throws DataAccessException {

@@ -32,6 +32,17 @@ public class ChessBoard {
         }
     }
 
+    public String serialize(){
+        var builder = new StringBuilder();
+        for (int i = 0; i < 8; i++){
+            for (int j = 0; j < 8; j++){
+                var piece = squares[i][j];
+                builder.append(piece == null ? "." : piece);
+            }
+        }
+        return builder.toString();
+    }
+
     public static ChessBoard parseFromString(String gameString) {
         ChessBoard board = new ChessBoard();
         for (int i = 0; i < 8; i++){

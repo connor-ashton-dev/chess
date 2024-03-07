@@ -1,14 +1,15 @@
 package service;
 
 import dataAccess.DataAccessException;
+import dataAccess.SQLDAO;
 import dataAccess.UserDAO;
 import model.AuthData;
 import model.UserData;
 
 public class AuthService {
-    UserDAO dao;
+    SQLDAO dao;
 
-    public AuthService(UserDAO dao) {
+    public AuthService(SQLDAO dao) {
         this.dao = dao;
     }
 

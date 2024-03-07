@@ -31,6 +31,10 @@ public class ChessGame {
         return game;
     }
 
+    public String serialize(){
+        return board.serialize();
+    }
+
     /**
      * @return Which team's turn it is
      */

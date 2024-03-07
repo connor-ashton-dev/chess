@@ -1,9 +1,6 @@
 package serviceTests;
 
-import dataAccess.DataAccessException;
-import dataAccess.GameDAO;
-import dataAccess.MemObj;
-import dataAccess.UserDAO;
+import dataAccess.*;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
@@ -15,8 +12,7 @@ import org.junit.jupiter.api.Test;
 import service.GameService;
 
 class GameServiceTest {
-    GameDAO gDao;
-    UserDAO uDao;
+    SQLDAO dao;
     UserData user;
     GameService gameService;
 
@@ -24,22 +20,25 @@ class GameServiceTest {
     GameData newGame = new GameData(240, "", "", "", null);
 
     @BeforeEach
-    // prep the memory of the tests
+        // prep the memory of the tests
     void prep() {
-        user = new UserData("u", "p", "e");
+        try {
+            user = new UserData("u", "p", "e");
 
-        gDao = new GameDAO();
-        uDao = new UserDAO();
-        gameService = new GameService();
+            dao = new SQLDAO();
+            gameService = new GameService(dao);
 
-        MemObj.MemClear();
+            MemObj.MemClear();
+        } catch (Exception e) {
+            System.out.println("err" + e);
+        }
     }
 
 
     @Test
     void listGamesGood() {
-        var tok = assertDoesNotThrow(() -> uDao.insertUser(user));
-        var game = assertDoesNotThrow(() -> gDao.createGame(tok, newGame));
+        var tok = assertDoesNotThrow(() -> dao.insertUser(user));
+        var game = assertDoesNotThrow(() -> dao.createGame(tok, newGame));
         var allGames = assertDoesNotThrow(() -> gameService.listGames(tok));
         assertTrue(allGames.contains(game));
     }
@@ -47,8 +46,8 @@ class GameServiceTest {
 
     @Test
     void listGamesBad() {
-        var tok = assertDoesNotThrow(() -> uDao.insertUser(user));
-        assertDoesNotThrow(() -> gDao.createGame(tok, newGame));
+        var tok = assertDoesNotThrow(() -> dao.insertUser(user));
+        assertDoesNotThrow(() -> dao.createGame(tok, newGame));
 
         var badToken = new AuthData(user.getUsername());
 
@@ -58,20 +57,20 @@ class GameServiceTest {
 
     @Test
     void joinGameGood() {
-        var tok = assertDoesNotThrow(() -> uDao.insertUser(user));
+        var tok = assertDoesNotThrow(() -> dao.insertUser(user));
         var gameToInsert = new GameData(234234, "wUsername", null, "sickGame", null);
 
-        var game = assertDoesNotThrow(() -> gDao.createGame(tok, gameToInsert));
+        var game = assertDoesNotThrow(() -> dao.createGame(tok, gameToInsert));
 
         assertDoesNotThrow(() -> gameService.joinGame(tok, new GameData(game.getGameId(), null, user.getUsername(), game.getGameName(), null)));
     }
 
     @Test
     void joinGameBad() {
-        var tok = assertDoesNotThrow(() -> uDao.insertUser(user));
+        var tok = assertDoesNotThrow(() -> dao.insertUser(user));
         var gameToInsert = new GameData(234234, "wUsername", null, "sickGame", null);
 
-        var game = assertDoesNotThrow(() -> gDao.createGame(tok, gameToInsert));
+        var game = assertDoesNotThrow(() -> dao.createGame(tok, gameToInsert));
 
         var err = assertThrows(DataAccessException.class, () -> gameService.joinGame(new AuthData(user.getUsername()), new GameData(game.getGameId(), null, user.getUsername(), game.getGameName(), null)));
         assertTrue(err.getMessage().toLowerCase().contains("unauthorized"));
@@ -79,7 +78,7 @@ class GameServiceTest {
 
     @Test
     void createGameGood() {
-        var tok = assertDoesNotThrow(() -> uDao.insertUser(user));
+        var tok = assertDoesNotThrow(() -> dao.insertUser(user));
         assertDoesNotThrow(() -> gameService.createGame(tok, newGame));
     }
 

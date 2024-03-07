@@ -11,23 +11,21 @@ import service.GameService;
 import service.UserService;
 import spark.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Server {
     GameService gameService;
     UserService userService;
     AuthService authService;
-
     public Server(){
-        GameDAO gDao = new GameDAO();
-        UserDAO uDAO = new UserDAO();
-
-        gameService = new GameService(gDao);
-        userService = new UserService(uDAO);
-        authService = new AuthService(uDAO);
+        try{
+            SQLDAO dao = new SQLDAO();
+            gameService = new GameService(dao);
+            userService = new UserService(dao);
+            authService = new AuthService(dao);
+        } catch (DataAccessException e){
+            System.out.println(e.getMessage());
+        }
     }
 
     public int run(int desiredPort) {

@@ -18,6 +18,7 @@ public interface DBInterface {
     // game stuff
     List<GameData> listGames(AuthData tok) throws DataAccessException;
     void joinGame(AuthData tok, GameData game) throws DataAccessException;
+    GameData createGame(AuthData tok, GameData game) throws DataAccessException;
     void updateGame(AuthData tok, GameData game) throws DataAccessException;
     GameData getGame(AuthData tok, int id) throws DataAccessException;
 

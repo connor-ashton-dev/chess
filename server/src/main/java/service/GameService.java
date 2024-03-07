@@ -2,22 +2,19 @@ package service;
 
 import dataAccess.DataAccessException;
 import dataAccess.GameDAO;
+import dataAccess.SQLDAO;
 import model.AuthData;
 import model.GameData;
 
 import java.util.List;
 
 public class GameService {
-    GameDAO dao;
+    SQLDAO dao;
 
-    public GameService(){
-        this.dao = new GameDAO();
-    }
 
-    public GameService(GameDAO dao){
+    public GameService(SQLDAO dao){
         this.dao = dao;
     }
-
 
     public List<GameData> listGames(AuthData tok) throws DataAccessException {
         return this.dao.listGames(tok);

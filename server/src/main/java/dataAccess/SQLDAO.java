@@ -12,7 +12,7 @@ import java.util.List;
 import static java.sql.Types.NULL;
 
 
-public class SQLDAO implements DBInterface {
+public class SQLDAO implements DBInterface{
     private static SQLDAO DBInstance;
 
     private final String[] createMyStuff = {
@@ -60,7 +60,8 @@ public class SQLDAO implements DBInterface {
             ChessGame.parseFromString(rs.getString(3), ChessGame.TeamColor.values()[rs.getInt(4)])
     );
 
-    public SQLDAO() throws DataAccessException {
+
+    public SQLDAO() throws DataAccessException{
         startDB();
     }
 
@@ -203,26 +204,97 @@ public class SQLDAO implements DBInterface {
 
     @Override
     public void logoutUser(AuthData tok) throws DataAccessException {
+        if (tok == null) throw new DataAccessException("unauthorized");
 
+        var action = changeSQLActionINfo("delete from %DB_NAME%.authTokens where authToken=?;");
+
+        var tup = dbUpdate(action, tok.getAuthToken());
+        if (tup.numAffectedRows == 0) throw new DataAccessException("unauthorized");
     }
 
     @Override
     public List<GameData> listGames(AuthData tok) throws DataAccessException {
-        return null;
+        tok = checkTokInDB(tok);
+
+        var action = changeSQLActionINfo("select * from %DB_NAME%.games;");
+        return dbExecute(action, gameDataAdapter);
     }
 
     @Override
     public void joinGame(AuthData tok, GameData game) throws DataAccessException {
+        tok = checkTokInDB(tok);
+        if (game == null) throw new DataAccessException("bad request");
 
+        var username = tok.getUsername();
+        var action = changeSQLActionINfo("select * from %DB_NAME%.games where id=?;");
+        var result = dbExecute(action, gameDataAdapter, game.getGameId());
+
+        if (result.isEmpty()) throw new DataAccessException("bad request");
+        var target = result.getFirst();
+
+        if (game.getWhiteUsername() == null && game.getBlackUsername() == null) {
+            return;
+        }
+
+        var whiteUsername = target.getWhiteUsername();
+        var blackUsername = target.getBlackUsername();
+        var nullUserToReplace = game.getBlackUsername() != null ? blackUsername : whiteUsername;
+
+        if (nullUserToReplace != null && !nullUserToReplace.isEmpty()) throw new DataAccessException("already taken");
+
+        if (game.getWhiteUsername() == null || game.getWhiteUsername().isEmpty()) blackUsername = username;
+        else whiteUsername = username;
+
+        var updateStatement = changeSQLActionINfo("update %DB_NAME%.games set whitePlayer = ?, blackPlayer = ? where id = ?;");
+
+        dbUpdate(updateStatement, whiteUsername, blackUsername, game.getGameId());
     }
 
     @Override
     public void updateGame(AuthData tok, GameData game) throws DataAccessException {
+        tok = checkTokInDB(tok);
+        if (game == null) throw new DataAccessException("bad request");
 
+        var id = game.getGameId();
+
+        var action = changeSQLActionINfo("select * from %DB_NAME%.games where id=?;");
+        var results = dbExecute(action, gameDataAdapter, id);
+        if (results.isEmpty()) throw new DataAccessException("No game");
+
+        var newAction = changeSQLActionINfo("update %DB_NAME%.games set game = ?, currentTurn = ? where id = ?;");
+        var myGame = (ChessGame) game.getGame();
+        var currentTurn = myGame.getTeamTurn() == ChessGame.TeamColor.WHITE ? 0 : 1;
+        dbUpdate(newAction, myGame.serialize(), currentTurn, game.getGameId());
     }
 
     @Override
+    public GameData createGame(AuthData tok, GameData game) throws DataAccessException {
+      tok = checkTokInDB(tok);
+      if (game == null) throw new DataAccessException("unauthorized");
+
+      var action = changeSQLActionINfo("insert into %DB_NAME%.games (name, game, currentTurn, whitePlayer, blackPlayer) values (?, ?, 0, ?, ?);");
+      var target = new ChessGame();
+      target.getBoard().resetBoard();
+
+      var tup = dbUpdate(action, game.getGameName(), target.serialize(), game.getWhiteUsername(), game.getBlackUsername());
+      return new GameData(tup.generatedID, game.getWhiteUsername(), game.getBlackUsername(), game.getGameName(), new ChessGame());
+    }
+
+
+    @Override
     public GameData getGame(AuthData tok, int id) throws DataAccessException {
-        return null;
+        tok = checkTokInDB(tok);
+        var action = changeSQLActionINfo("select * from %DB_NAME%.games where id=?;");
+        var results = dbExecute(action, gameDataAdapter, id);
+        if (results.isEmpty()) throw new DataAccessException("no game found");
+        return results.getFirst();
+    }
+
+
+    private AuthData checkTokInDB(AuthData tok) throws DataAccessException {
+        if (tok == null) throw new DataAccessException("unauthorized");
+        tok = getAuthUser(tok);
+        if (tok == null) throw new DataAccessException("unauthorized");
+        return tok;
     }
 }

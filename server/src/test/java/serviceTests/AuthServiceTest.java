@@ -2,6 +2,7 @@ package serviceTests;
 
 import dataAccess.DataAccessException;
 import dataAccess.MemObj;
+import dataAccess.SQLDAO;
 import dataAccess.UserDAO;
 import model.AuthData;
 import model.UserData;
@@ -13,15 +14,21 @@ import service.UserService;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AuthServiceTest {
-    UserDAO dao;
+    SQLDAO dao;
+
     @BeforeEach
-    void prep(){
-        dao = new UserDAO();
-        MemObj.MemClear();
+    void prep() {
+        try {
+
+            dao = new SQLDAO();
+            MemObj.MemClear();
+        } catch (Exception e) {
+            System.out.println("err" + e);
+        }
     }
 
     @Test
-    // test for a good login
+        // test for a good login
     void loginGood() {
         var testUser = new UserData("u", "p", "e");
         var authService = new AuthService(dao);
@@ -37,8 +44,8 @@ class AuthServiceTest {
     }
 
     @Test
-    // test for bad login
-    void loginUserNotFound(){
+        // test for bad login
+    void loginUserNotFound() {
         var testUser = new UserData("u", null, "e");
         var authService = new AuthService(dao);
         var err = assertThrows(DataAccessException.class, () -> authService.login(testUser));
@@ -46,7 +53,7 @@ class AuthServiceTest {
     }
 
     @Test
-    // test for good logout
+        // test for good logout
     void logoutGood() {
         var testUser = new UserData("u", "p", "e");
         var authService = new AuthService(dao);
@@ -61,8 +68,8 @@ class AuthServiceTest {
 
 
     @Test
-    // test for bad logout
-    void logoutBad(){
+        // test for bad logout
+    void logoutBad() {
         var authService = new AuthService(dao);
         var authToken = new AuthData("username");
 

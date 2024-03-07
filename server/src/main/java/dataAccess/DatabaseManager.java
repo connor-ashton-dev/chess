@@ -41,7 +41,6 @@ public class DatabaseManager {
     static void createDatabase() throws DataAccessException {
         try {
             var statement = "CREATE DATABASE IF NOT EXISTS " + databaseName;
-            System.out.println("got conn");
             var conn = DriverManager.getConnection(connectionUrl, user, password);
             try (var preparedStatement = conn.prepareStatement(statement)) {
                 preparedStatement.executeUpdate();
@@ -68,7 +67,6 @@ public class DatabaseManager {
     public static Connection getConnection() throws DataAccessException {
         try {
             createDatabase();
-            System.out.println("CREATED");
             var conn = DriverManager.getConnection(connectionUrl, user, password);
             conn.setCatalog(databaseName);
             return conn;

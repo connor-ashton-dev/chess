@@ -1,9 +1,8 @@
-package ui;
-
 import java.util.Scanner;
 import model.AuthData;
 import model.UserData;
 import serverFacade.ServerFacade;
+import ui.ClientException;
 
 public class Main {
     private static ServerFacade serverFacade;
@@ -68,15 +67,54 @@ public class Main {
     }
 
     private static void register(String[] params) throws Exception {
-        // Implement registration logic here
+        if (params.length != 3) {
+            System.out.println("Usage: register <username> <password> <email>");
+            return;
+        }
+
+        String username = params[0];
+        String password = params[1];
+        String email = params[2];
+
+        try {
+            UserData userData = new UserData(username, password, email);
+            authData = serverFacade.registerUser(userData);
+            System.out.println("Registration successful. You are now logged in.");
+        } catch (ClientException e) {
+            System.out.println("Registration failed: " + e.getMessage());
+        }
     }
 
     private static void login(String[] params) throws Exception {
-        // Implement login logic here
+        if (params.length != 3) {
+            System.out.println("Usage: login <username> <password>");
+            return;
+        }
+        String username = params[0];
+        String password = params[1];
+        String email= params[1];
+        try {
+            UserData userData = new UserData(username, password, email);
+            authData = serverFacade.login(userData);
+            System.out.println("Login successful.");
+        } catch (ClientException e) {
+            System.out.println("Login failed: " + e.getMessage());
+        }
     }
 
+
     private static void logout() throws Exception {
-        // Implement logout logic here
+        if (authData == null) {
+            System.out.println("You are not logged in.");
+            return;
+        }
+        try {
+            serverFacade.logout(authData);
+            authData = null; // Clear authentication data
+            System.out.println("Logout successful.");
+        } catch (ClientException e) {
+            System.out.println("Logout failed: " + e.getMessage());
+        }
     }
 
     private static void listGames() throws Exception {

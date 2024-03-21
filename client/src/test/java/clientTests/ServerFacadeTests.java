@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ServerFacadeTests {
 
-    ServerFacade serverFacade = new ServerFacade();
+    private static ServerFacade serverFacade;
     UserData testUser = new UserData("uniqueUser", "password123", "email@test.com");
     private static Server server;
 
@@ -22,6 +22,7 @@ public class ServerFacadeTests {
     public static void init() {
         server = new Server();
         var port = server.run(0);
+        serverFacade  = new ServerFacade("localhost", port);
         System.out.println("Started test HTTP server on " + port);
     }
     @AfterAll

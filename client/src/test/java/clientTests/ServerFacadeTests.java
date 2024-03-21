@@ -12,7 +12,7 @@ import ui.ClientException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ServerFacadeTests {
+public class ServerFacadeTests {
 
     ServerFacade serverFacade = new ServerFacade();
     UserData testUser = new UserData("uniqueUser", "password123", "email@test.com");
@@ -30,7 +30,7 @@ class ServerFacadeTests {
     }
 
     @BeforeEach
-    void setupEnvironment() {
+    public void setupEnvironment() {
         try {
             serverFacade.clear();
         } catch (ClientException e) {
@@ -39,19 +39,19 @@ class ServerFacadeTests {
     }
 
     @Test
-    void testClearDatabase() {
+    public void testClearDatabase() {
         assertDoesNotThrow(() -> serverFacade.clear());
     }
 
     @Test
-    void testUserRegistrationSuccess() {
+    public void testUserRegistrationSuccess() {
         var registrationToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
         assertNotNull(registrationToken);
         assertEquals(testUser.getUsername(), registrationToken.getUsername());
         assertNotNull(registrationToken.getAuthToken());
     }
     @Test
-    void testJoinGameNonExistent() {
+    public void testJoinGameNonExistent() {
         AuthData userToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
         int nonExistentGameId = 100;
         ClientException exception = assertThrows(ClientException.class,
@@ -62,7 +62,7 @@ class ServerFacadeTests {
 
 
     @Test
-    void testUserRegistrationDuplicate() {
+    public void testUserRegistrationDuplicate() {
         var firstRegistrationToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
         assertNotNull(firstRegistrationToken);
         assertEquals(testUser.getUsername(), firstRegistrationToken.getUsername());
@@ -73,7 +73,7 @@ class ServerFacadeTests {
     }
 
     @Test
-    void testSuccessfulLogin() {
+    public void testSuccessfulLogin() {
         var registrationToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
         assertNotNull(registrationToken);
 
@@ -86,13 +86,13 @@ class ServerFacadeTests {
     }
 
     @Test
-    void testLoginFailureUnauthorized() {
+    public void testLoginFailureUnauthorized() {
         var loginFailure = assertThrows(ClientException.class, () -> serverFacade.login(testUser));
         assertEquals("Error: unauthorized", loginFailure.getMessage());
     }
 
     @Test
-    void testSuccessfulLogout() {
+    public void testSuccessfulLogout() {
         var authToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
         assertDoesNotThrow(() -> serverFacade.logout(authToken));
 
@@ -101,7 +101,7 @@ class ServerFacadeTests {
     }
 
     @Test
-    void testLogoutWithoutAuthorization() {
+    public void testLogoutWithoutAuthorization() {
         var invalidAuthToken = new AuthData("nonexistentUser");
         var unauthorizedLogoutError = assertThrows(ClientException.class, () -> serverFacade.logout(invalidAuthToken));
 
@@ -109,7 +109,7 @@ class ServerFacadeTests {
     }
 
     @Test
-    void testListingGamesAfterCreation() {
+    public void testListingGamesAfterCreation() {
         var authToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
 
         var createdGame = assertDoesNotThrow(() -> serverFacade.createGame(authToken, "Chess Match"));
@@ -123,35 +123,35 @@ class ServerFacadeTests {
     }
 
     @Test
-    void testGameListingUnauthorized() {
+    public void testGameListingUnauthorized() {
         var fakeAuthToken = new AuthData("invalidUser");
         var unauthorizedListGamesError = assertThrows(ClientException.class, () -> serverFacade.listGames(fakeAuthToken));
         assertEquals("Error: unauthorized", unauthorizedListGamesError.getMessage());
     }
 
     @Test
-    void testCreatingGameSuccessfully() {
+    public void testCreatingGameSuccessfully() {
         var userToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
         var newGame = assertDoesNotThrow(() -> serverFacade.createGame(userToken, "New Chess Game"));
         assertNotNull(newGame);
     }
 
     @Test
-    void testGameCreationUnauthorized() {
+    public void testGameCreationUnauthorized() {
         var unauthorizedToken = new AuthData("invalidUser");
         var creationUnauthorizedError = assertThrows(ClientException.class, () -> serverFacade.createGame(unauthorizedToken, "Unauthorized Game"));
         assertEquals("Error: unauthorized", creationUnauthorizedError.getMessage());
     }
 
     @Test
-    void testJoiningGameSuccessfully() {
+    public void testJoiningGameSuccessfully() {
         var userToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
         var gameToJoin = assertDoesNotThrow(() -> serverFacade.createGame(userToken, "Joinable Chess Game"));
         assertDoesNotThrow(() -> serverFacade.joinGame(userToken, gameToJoin.getGameId(), "WHITE"));
     }
 
     @Test
-    void testJoinGameWhenSlotIsOccupied() {
+    public void testJoinGameWhenSlotIsOccupied() {
         var authToken=assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
         var game=assertDoesNotThrow(() -> serverFacade.createGame(authToken, "game"));
         assertDoesNotThrow(() -> serverFacade.joinGame(authToken, game.getGameId(), "WHITE"));
@@ -160,16 +160,15 @@ class ServerFacadeTests {
 
     }
 
-
     @Test
-    void observeGameGood(){
+    public void observeGameGood(){
         var userToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
         var gameToObserve = assertDoesNotThrow(() -> serverFacade.createGame(userToken, "gonna observe"));
         var doesExist = assertDoesNotThrow(() -> serverFacade.observeGame(userToken, gameToObserve.getGameId()));
         assertTrue(doesExist);
     }
     @Test
-    void observeGameBad() {
+    public void observeGameBad() {
         var userToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
         var doesExist = assertDoesNotThrow(() -> serverFacade.observeGame(userToken, 500));
         assertFalse(doesExist);

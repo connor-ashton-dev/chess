@@ -26,7 +26,7 @@ public class ServerFacade {
     }
 
     public ServerFacade() {
-        this("localhost", 8080);
+        this("localhost", 0);
     }
 
     public void clear() throws ClientException {

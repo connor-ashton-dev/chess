@@ -94,7 +94,7 @@ public class Main {
         }
         String username = params[0];
         String password = params[1];
-        String email= params[1];
+        String email= params[2];
         try {
             UserData userData = new UserData(username, password, email);
             authData = serverFacade.login(userData);

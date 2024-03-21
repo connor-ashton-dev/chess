@@ -107,16 +107,28 @@ public class ServerFacade {
         }
     }
 
-    private <T> T readData(HttpURLConnection connection, Class<T> classOfT) throws IOException, ClientException {
-        InputStream responseBody = getResponseBody(connection);
-        StringBuilder response = new StringBuilder();
-        try (var reader = new BufferedReader(new InputStreamReader(responseBody))) {
+    public <T> T readData(HttpURLConnection connection, Class<T> classOfT) throws ClientException {
+        try {
+            InputStream responseBody;
+            try {
+                responseBody=connection.getInputStream();
+            } catch (IOException ignored) {
+                responseBody=connection.getErrorStream();
+            }
+            var reader=new BufferedReader(new InputStreamReader(responseBody));
+            var response=new StringBuilder();
             String line;
-            while ((line = reader.readLine()) != null) {
+
+            while ((line=reader.readLine()) != null) {
                 response.append(line);
             }
+            reader.close();
+            responseBody.close();
+
+            return new Gson().fromJson(response.toString(), classOfT);
+        } catch (IOException ex) {
+            throw new ClientException(HttpURLConnection.HTTP_BAD_REQUEST, ex.getMessage());
         }
-        return new Gson().fromJson(response.toString(), classOfT);
     }
 
     private InputStream getResponseBody(HttpURLConnection connection) throws IOException {

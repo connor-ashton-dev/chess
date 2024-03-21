@@ -1,10 +1,12 @@
 package model;
 
 import chess.ChessGame;
+import com.google.gson.annotations.SerializedName;
 
 import java.util.Objects;
 
 public class GameData {
+    @SerializedName("gameID")
     int gameId;
     String whiteUsername;
     String blackUsername;

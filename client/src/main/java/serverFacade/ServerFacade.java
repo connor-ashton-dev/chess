@@ -47,7 +47,6 @@ public class ServerFacade {
 
     public List<GameData> listGames(AuthData authToken) throws ClientException {
         GamesList games = makeRequest("GET", "game", null, GamesList.class, authToken);
-        System.out.println(games);
         return games.games().stream().map(GameHelper::toGame).toList();
     }
 
@@ -56,7 +55,10 @@ public class ServerFacade {
     }
 
     public void joinGame(AuthData authToken, int gameID, String playerColor) throws ClientException {
-        makeRequest("PUT", "game", new JoinGameRequest(gameID, playerColor), null, authToken);
+        var games = this.listGames(authToken);
+        if (games.size() < gameID) throw new ClientException(HttpURLConnection.HTTP_BAD_REQUEST, "Error: bad request");
+        var targetGame = games.get(gameID - 1);
+        makeRequest("PUT", "game", new JoinGameRequest(targetGame.getGameId(), playerColor), null, authToken);
     }
 
     public boolean observeGame(AuthData authToken, int gameID) throws ClientException {

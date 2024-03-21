@@ -54,7 +54,7 @@ public class ServerFacadeTests {
     @Test
     public void testJoinGameNonExistent() {
         AuthData userToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
-        int nonExistentGameId = 100;
+        int nonExistentGameId = 7;
         ClientException exception = assertThrows(ClientException.class,
                 () -> serverFacade.joinGame(userToken, nonExistentGameId, "WHITE"));
 

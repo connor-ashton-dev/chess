@@ -1,3 +1,4 @@
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import model.AuthData;
@@ -20,12 +21,12 @@ public class Main {
 
         while (running) {
             if (authData == null) {
-                System.out.println("Prelogin Commands: register, login, help, quit");
+                System.out.print("[LOGGED_OUT] ");
             } else {
-                System.out.println("Postlogin Commands: logout, list, create, join, observe, quit");
+                System.out.print("[LOGGED_IN] ");
             }
 
-            System.out.print("> ");
+            System.out.print(">>> ");
             String input = scanner.nextLine();
             String[] inputs = input.split("\\s+");
             String command = inputs[0].toLowerCase();
@@ -135,8 +136,21 @@ public class Main {
             } else {
                 System.out.println("Available games:");
                 for (int i = 0; i < games.size(); i++) {
-                    System.out.println((i + 1) + ": " + games.get(i).getGameName());
-                }
+                    String gameName = STR."\{i + 1}: \{games.get(i).getGameName()}";
+                    String whitePlayer = games.get(i).getWhiteUsername();
+                    String blackPlayer = games.get(i).getBlackUsername();
+
+                    // Check for white player presence
+                    String whiteDisplay = whitePlayer == null || whitePlayer.isEmpty() ? "WHITE: no players" : "WHITE: " + whitePlayer;
+                    // Check for black player presence
+                    String blackDisplay = blackPlayer == null || blackPlayer.isEmpty() ? "BLACK: no players" : "BLACK: " + blackPlayer;
+
+                    // Ensure "no players" is only shown if both are absent
+                    if (whiteDisplay.equals("no players") && blackDisplay.equals("no players")) {
+                        System.out.println(gameName + ": no players");
+                    } else {
+                        System.out.println(gameName + ": " + whiteDisplay + " " + blackDisplay);
+                    }                }
             }
         } catch (ClientException e) {
             System.out.println("Failed to list games: " + e.getMessage());
@@ -148,12 +162,12 @@ public class Main {
             System.out.println("You must be logged in to create a game.");
             return;
         }
-        if (params.length != 1) {
+        if (params.length < 1) {
             System.out.println("Usage: create <gameName>");
             return;
         }
         try {
-            String gameName = params[0];
+            String gameName = String.join(" ", Arrays.copyOfRange(params, 0, params.length));
             serverFacade.createGame(authData, gameName);
             System.out.println("Game created successfully.");
         } catch (ClientException e) {
@@ -210,9 +224,9 @@ public class Main {
 
     private static void printHelp() {
         if (authData == null) {
-            System.out.println("Available commands: register, login, help, quit");
+            System.out.println("Available commands:\nregister <username> <password> <email>\nlogin <username> <password>\nhelp\nquit");
         } else {
-            System.out.println("Available commands: logout, list, create, join, quit");
+            System.out.println("Available commands:\nlogout\nlist\ncreate <name>\njoin\nquit");
         }
     }
 }

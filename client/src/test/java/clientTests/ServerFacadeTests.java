@@ -1,3 +1,5 @@
+package clientTests;
+
 import model.AuthData;
 import model.UserData;
 import org.junit.jupiter.api.BeforeEach;

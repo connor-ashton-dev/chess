@@ -107,7 +107,7 @@ public class ServerFacade {
         }
     }
 
-    public <T> T readData(HttpURLConnection connection, Class<T> classOfT) throws ClientException {
+    private <T> T readData(HttpURLConnection connection, Class<T> classOfT) throws ClientException {
         try {
             InputStream responseBody;
             try {
@@ -129,16 +129,6 @@ public class ServerFacade {
         } catch (IOException ex) {
             throw new ClientException(HttpURLConnection.HTTP_BAD_REQUEST, ex.getMessage());
         }
-    }
-
-    private InputStream getResponseBody(HttpURLConnection connection) throws IOException {
-        InputStream responseBody;
-        try {
-            responseBody = connection.getInputStream();
-        } catch (IOException ignored) {
-            responseBody = connection.getErrorStream();
-        }
-        return responseBody;
     }
 
     private record ErrorResponse(String message) {

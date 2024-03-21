@@ -41,6 +41,7 @@ class ServerFacadeTests {
     @Test
     void testClearDatabase() {
         assertDoesNotThrow(() -> serverFacade.clear());
+        assertDoesNotThrow(() -> serverFacade.clear());
     }
 
     @Test

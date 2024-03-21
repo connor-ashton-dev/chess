@@ -101,10 +101,10 @@ public class Server {
     private Object joinGame(Request req, Response res) {
         String tok = getTokFromHeaders(req);
         AuthData authToken = new AuthData("", tok);
-        System.out.println(req.body());
+        System.out.println("the body" + req.body());
         try {
             var body = new Gson().fromJson(req.body(), HashMap.class);
-            int gameId = (int) Math.round((Double) body.get("gameID"));
+            int gameId = ((Double) body.get("gameID")).intValue();
             var color = (String) body.get("playerColor");
             var black = "BLACK".equals(color) ? color : null;
             var white = "WHITE".equals(color) ? color : null;

@@ -1,5 +1,7 @@
+import java.util.List;
 import java.util.Scanner;
 import model.AuthData;
+import model.GameData;
 import model.UserData;
 import serverFacade.ServerFacade;
 import ui.ClientException;
@@ -118,15 +120,62 @@ public class Main {
     }
 
     private static void listGames() throws Exception {
-        // Implement game listing logic here
+        if (authData == null) {
+            System.out.println("You must be logged in to list games.");
+            return;
+        }
+        try {
+            List<GameData> games = serverFacade.listGames(authData);
+            if (games.isEmpty()) {
+                System.out.println("No games available.");
+            } else {
+                System.out.println("Available games:");
+                for (int i = 0; i < games.size(); i++) {
+                    System.out.println((i + 1) + ": " + games.get(i).getGameName());
+                }
+            }
+        } catch (ClientException e) {
+            System.out.println("Failed to list games: " + e.getMessage());
+        }
     }
 
     private static void createGame(String[] params) throws Exception {
-        // Implement game creation logic here
+        if (authData == null) {
+            System.out.println("You must be logged in to create a game.");
+            return;
+        }
+        if (params.length != 1) {
+            System.out.println("Usage: create <gameName>");
+            return;
+        }
+        try {
+            String gameName = params[0];
+            serverFacade.createGame(authData, gameName);
+            System.out.println("Game created successfully.");
+        } catch (ClientException e) {
+            System.out.println("Failed to create game: " + e.getMessage());
+        }
     }
 
     private static void joinGame(String[] params) throws Exception {
-        // Implement game joining logic here
+        if (authData == null) {
+            System.out.println("You must be logged in to join a game.");
+            return;
+        }
+        if (params.length != 2) {
+            System.out.println("Usage: join <gameID> <playerColor>");
+            return;
+        }
+        try {
+            int gameID = Integer.parseInt(params[0]); // Assuming gameID is the first parameter
+            String playerColor = params[1]; // Assuming playerColor is the second parameter
+            serverFacade.joinGame(authData, gameID, playerColor);
+            System.out.println("Joined game successfully.");
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid game ID.");
+        } catch (ClientException e) {
+            System.out.println("Failed to join game: " + e.getMessage());
+        }
     }
 
     private static void printHelp() {

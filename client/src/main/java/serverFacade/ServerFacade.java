@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ServerFacade {
@@ -46,6 +47,7 @@ public class ServerFacade {
 
     public List<GameData> listGames(AuthData authToken) throws ClientException {
         GamesList games = makeRequest("GET", "game", null, GamesList.class, authToken);
+        System.out.println(games);
         return games.games().stream().map(GameHelper::toGame).toList();
     }
 
@@ -127,35 +129,12 @@ public class ServerFacade {
         return responseBody;
     }
 
-    private static class ErrorResponse {
-        private final String message;
-
-        public ErrorResponse(String message) {
-            this.message = message;
-        }
-
-        public String message() {
-            return message;
-        }
-    }
-    private static class GamesList {
-        private final List<GameHelper> games;
-        public GamesList(List<GameHelper> games) {
-            this.games = games;
-        }
-
-        public List<GameHelper> games() {
-            return games;
-        }
+    private record ErrorResponse(String message) {
     }
 
-    private static class JoinGameRequest {
-        private final int gameID;
-        private final String playerColor;
+    private record GamesList(ArrayList<GameHelper> games) {
+    }
 
-        public JoinGameRequest(int gameID, String playerColor) {
-            this.gameID = gameID;
-            this.playerColor = playerColor;
-        }
+    private record JoinGameRequest(int gameID, String playerColor) {
     }
 }

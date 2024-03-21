@@ -4,6 +4,7 @@ import model.AuthData;
 import model.GameData;
 import model.UserData;
 import serverFacade.ServerFacade;
+import ui.ChessboardUI;
 import ui.ClientException;
 
 public class Main {
@@ -11,7 +12,7 @@ public class Main {
     private static AuthData authData = null; // Holds authentication data once logged in
 
     public static void main(String[] args) {
-        serverFacade = new ServerFacade(); // Assuming localhost and default port
+        serverFacade = new ServerFacade("localhost", 8080);
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("Welcome to the Chess Game!");
@@ -173,7 +174,8 @@ public class Main {
             int gameID = Integer.parseInt(params[0]); // Assuming gameID is the first parameter
             String playerColor = params[1]; // Assuming playerColor is the second parameter
             serverFacade.joinGame(authData, gameID, playerColor);
-            System.out.println("Joined game successfully.");
+            ChessboardUI.draw(false);
+            ChessboardUI.draw(true);
         } catch (NumberFormatException e) {
             System.out.println("Invalid game ID.");
         } catch (ClientException e) {
@@ -193,6 +195,8 @@ public class Main {
         try {
             int gameID = Integer.parseInt(params[0]); // Assuming gameID is the first parameter
             if (serverFacade.observeGame(authData, gameID)){
+                ChessboardUI.draw(false);
+                ChessboardUI.draw(true);
                 System.out.println("Observed game successfully.");
             }else{
                 System.out.println("Game not found");

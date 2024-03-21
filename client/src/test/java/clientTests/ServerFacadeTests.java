@@ -41,7 +41,6 @@ class ServerFacadeTests {
     @Test
     void testClearDatabase() {
         assertDoesNotThrow(() -> serverFacade.clear());
-        assertDoesNotThrow(() -> serverFacade.clear());
     }
 
     @Test
@@ -51,6 +50,16 @@ class ServerFacadeTests {
         assertEquals(testUser.getUsername(), registrationToken.getUsername());
         assertNotNull(registrationToken.getAuthToken());
     }
+    @Test
+    void testJoinGameNonExistent() {
+        AuthData userToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
+        int nonExistentGameId = 100;
+        ClientException exception = assertThrows(ClientException.class,
+                () -> serverFacade.joinGame(userToken, nonExistentGameId, "WHITE"));
+
+        assertEquals("Error: bad request", exception.getMessage());
+    }
+
 
     @Test
     void testUserRegistrationDuplicate() {
@@ -148,6 +157,22 @@ class ServerFacadeTests {
         assertDoesNotThrow(() -> serverFacade.joinGame(authToken, game.getGameId(), "WHITE"));
         var ex=assertThrows(ClientException.class, () -> serverFacade.joinGame(authToken, game.getGameId(), "WHITE"));
         assertEquals("Error: already taken", ex.getMessage());
+
+    }
+
+
+    @Test
+    void observeGameGood(){
+        var userToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
+        var gameToObserve = assertDoesNotThrow(() -> serverFacade.createGame(userToken, "gonna observe"));
+        var doesExist = assertDoesNotThrow(() -> serverFacade.observeGame(userToken, gameToObserve.getGameId()));
+        assertTrue(doesExist);
+    }
+    @Test
+    void observeGameBad() {
+        var userToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
+        var doesExist = assertDoesNotThrow(() -> serverFacade.observeGame(userToken, 500));
+        assertFalse(doesExist);
 
     }
 }

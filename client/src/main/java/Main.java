@@ -21,7 +21,7 @@ public class Main {
             if (authData == null) {
                 System.out.println("Prelogin Commands: register, login, help, quit");
             } else {
-                System.out.println("Postlogin Commands: logout, list, create, join, quit");
+                System.out.println("Postlogin Commands: logout, list, create, join, observe, quit");
             }
 
             System.out.print("> ");
@@ -50,6 +50,9 @@ public class Main {
                         break;
                     case "join":
                         joinGame(params);
+                        break;
+                    case "observe":
+                        observeGame(params);
                         break;
                     case "quit":
                         System.out.println("Exiting application.");
@@ -175,6 +178,29 @@ public class Main {
             System.out.println("Invalid game ID.");
         } catch (ClientException e) {
             System.out.println("Failed to join game: " + e.getMessage());
+        }
+    }
+
+    private static void observeGame(String[] params) throws Exception {
+        if (authData == null) {
+            System.out.println("You must be logged in to observe a game.");
+            return;
+        }
+        if (params.length != 1) {
+            System.out.println("Usage: observe <gameID>");
+            return;
+        }
+        try {
+            int gameID = Integer.parseInt(params[0]); // Assuming gameID is the first parameter
+            if (serverFacade.observeGame(authData, gameID)){
+                System.out.println("Observed game successfully.");
+            }else{
+                System.out.println("Game not found");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid game ID.");
+        } catch (ClientException e) {
+            System.out.println("Failed to observe game: " + e.getMessage());
         }
     }
 

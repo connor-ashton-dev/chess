@@ -59,6 +59,11 @@ public class ServerFacade {
         makeRequest("PUT", "game", new JoinGameRequest(gameID, playerColor), null, authToken);
     }
 
+    public boolean observeGame(AuthData authToken, int gameID) throws ClientException {
+        GamesList games = makeRequest("GET", "game", null, GamesList.class, authToken);
+        return games.games().stream().anyMatch(game -> game.gameID() == gameID);
+    }
+
     private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass, AuthData authToken) throws ClientException {
         try {
             HttpURLConnection connection = setupConnection(path, method, authToken);

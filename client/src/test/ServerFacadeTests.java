@@ -9,128 +9,127 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ServerFacadeTests {
 
-    ServerFacade server=new ServerFacade();
-    UserData user=new UserData("user", "pass", "email");
+    ServerFacade serverFacade = new ServerFacade();
+    UserData testUser = new UserData("uniqueUser", "password123", "email@test.com");
 
     @BeforeEach
-    void setUp() {
+    void setupEnvironment() {
         try {
-            server.clear();
+            serverFacade.clear();
         } catch (ClientException e) {
             System.out.println(e.getMessage());
         }
     }
 
     @Test
-    void clear() {
-        assertDoesNotThrow(() -> server.clear());
+    void testClearDatabase() {
+        assertDoesNotThrow(() -> serverFacade.clear());
     }
 
     @Test
-    void registerUserSuccess() {
-        var authToken=assertDoesNotThrow(() -> server.registerUser(user));
-        assertNotNull(authToken);
-        assertEquals(user.getUsername(), authToken.getUsername());
-        assertNotNull(authToken.getAuthToken());
+    void testUserRegistrationSuccess() {
+        var registrationToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
+        assertNotNull(registrationToken);
+        assertEquals(testUser.getUsername(), registrationToken.getUsername());
+        assertNotNull(registrationToken.getAuthToken());
     }
 
     @Test
-    void registerUserAlreadyExists() {
-        var authToken=assertDoesNotThrow(() -> server.registerUser(user));
-        assertNotNull(authToken);
-        assertEquals(user.getUsername(), authToken.getUsername());
-        assertNotNull(authToken.getAuthToken());
-        var ex=assertThrows(ClientException.class, () -> server.registerUser(user));
-        assertEquals("Error: error: username already taken", ex.getMessage());
+    void testUserRegistrationDuplicate() {
+        var firstRegistrationToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
+        assertNotNull(firstRegistrationToken);
+        assertEquals(testUser.getUsername(), firstRegistrationToken.getUsername());
+        assertNotNull(firstRegistrationToken.getAuthToken());
+
+        var duplicateRegistrationError = assertThrows(ClientException.class, () -> serverFacade.registerUser(testUser));
+        assertEquals("Error: error: username already taken", duplicateRegistrationError.getMessage());
     }
 
     @Test
-    void loginSuccess() {
-        var authToken=assertDoesNotThrow(() -> server.registerUser(user));
-        assertNotNull(authToken);
-        assertEquals(user.getUsername(), authToken.getUsername());
-        assertNotNull(authToken.getAuthToken());
+    void testSuccessfulLogin() {
+        var registrationToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
+        assertNotNull(registrationToken);
 
-        var loginAuthToken=assertDoesNotThrow(() -> server.login(user));
-        assertNotNull(loginAuthToken);
-        assertEquals(user.getUsername(), loginAuthToken.getUsername());
-        assertNotNull(loginAuthToken.getAuthToken());
+        var loginToken = assertDoesNotThrow(() -> serverFacade.login(testUser));
+        assertNotNull(loginToken);
+        assertEquals(testUser.getUsername(), loginToken.getUsername());
+        assertNotNull(loginToken.getAuthToken());
 
-        assertNotEquals(authToken.getAuthToken(), loginAuthToken.getAuthToken());
+        assertNotEquals(registrationToken.getAuthToken(), loginToken.getAuthToken());
     }
 
     @Test
-    void loginUnauthorized() {
-        var ex=assertThrows(ClientException.class, () -> server.login(user));
-        assertEquals("Error: unauthorized", ex.getMessage());
+    void testLoginFailureUnauthorized() {
+        var loginFailure = assertThrows(ClientException.class, () -> serverFacade.login(testUser));
+        assertEquals("Error: unauthorized", loginFailure.getMessage());
     }
 
     @Test
-    void logoutSuccess() {
-        var authToken=assertDoesNotThrow(() -> server.registerUser(user));
-        assertDoesNotThrow(() -> server.logout(authToken));
-        var ex=assertThrows(ClientException.class, () -> server.listGames(authToken));
-        assertEquals("Error: unauthorized", ex.getMessage());
+    void testSuccessfulLogout() {
+        var authToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
+        assertDoesNotThrow(() -> serverFacade.logout(authToken));
+
+        var unauthorizedError = assertThrows(ClientException.class, () -> serverFacade.listGames(authToken));
+        assertEquals("Error: unauthorized", unauthorizedError.getMessage());
     }
 
     @Test
-    void logoutUnauthorized() {
-        var authToken=new AuthData("user");
-        var ex=assertThrows(ClientException.class, () -> server.logout(authToken));
+    void testLogoutWithoutAuthorization() {
+        var invalidAuthToken = new AuthData("nonexistentUser");
+        var unauthorizedLogoutError = assertThrows(ClientException.class, () -> serverFacade.logout(invalidAuthToken));
 
-        assertEquals("Error: unauthorized", ex.getMessage());
+        assertEquals("Error: unauthorized", unauthorizedLogoutError.getMessage());
     }
 
     @Test
-    void listGamesSuccess() {
-        var authToken=assertDoesNotThrow(() -> server.registerUser(user));
-        assertNotNull(authToken);
-        assertEquals(user.getUsername(), authToken.getUsername());
-        assertNotNull(authToken.getAuthToken());
+    void testListingGamesAfterCreation() {
+        var authToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
 
-        var game=assertDoesNotThrow(() -> server.createGame(authToken, "game"));
-        System.out.println(game.getGameId());
-        assertNotNull(game);
-        var games=assertDoesNotThrow(() -> server.listGames(authToken));
-        assertNotNull(games);
-        assertEquals(games.getFirst().getGameId(), game.getGameId());
+        var createdGame = assertDoesNotThrow(() -> serverFacade.createGame(authToken, "Chess Match"));
+        assertNotNull(createdGame);
+        var gameId = createdGame.getGameId();
+        System.out.println("Game ID after creation: " + gameId);
+
+        var listedGames = assertDoesNotThrow(() -> serverFacade.listGames(authToken));
+        assertNotNull(listedGames);
+        assertTrue(listedGames.stream().anyMatch(game -> game.getGameId() == gameId));
     }
 
     @Test
-    void listGamesUnauthorized() {
-        var authToken=new AuthData("user");
-        var ex=assertThrows(ClientException.class, () -> server.listGames(authToken));
-        assertEquals("Error: unauthorized", ex.getMessage());
+    void testGameListingUnauthorized() {
+        var fakeAuthToken = new AuthData("invalidUser");
+        var unauthorizedListGamesError = assertThrows(ClientException.class, () -> serverFacade.listGames(fakeAuthToken));
+        assertEquals("Error: unauthorized", unauthorizedListGamesError.getMessage());
     }
 
     @Test
-    void createGameSuccess() {
-        var authToken=assertDoesNotThrow(() -> server.registerUser(user));
-        var game=assertDoesNotThrow(() -> server.createGame(authToken, "game"));
-        assertNotNull(game);
+    void testCreatingGameSuccessfully() {
+        var userToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
+        var newGame = assertDoesNotThrow(() -> serverFacade.createGame(userToken, "New Chess Game"));
+        assertNotNull(newGame);
     }
 
     @Test
-    void createGameUnauthorized() {
-        var authToken=new AuthData("user");
-        var ex=assertThrows(ClientException.class, () -> server.createGame(authToken, "game"));
-        assertEquals("Error: unauthorized", ex.getMessage());
+    void testGameCreationUnauthorized() {
+        var unauthorizedToken = new AuthData("invalidUser");
+        var creationUnauthorizedError = assertThrows(ClientException.class, () -> serverFacade.createGame(unauthorizedToken, "Unauthorized Game"));
+        assertEquals("Error: unauthorized", creationUnauthorizedError.getMessage());
     }
 
     @Test
-    void joinGameSuccess() throws ClientException {
-        var authToken=assertDoesNotThrow(() -> server.registerUser(user));
-        var game=assertDoesNotThrow(() -> server.createGame(authToken, "game"));
-        System.out.println(game.getGameId());
-        assertDoesNotThrow(() -> server.joinGame(authToken, game.getGameId(), "WHITE"));
+    void testJoiningGameSuccessfully() {
+        var userToken = assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
+        var gameToJoin = assertDoesNotThrow(() -> serverFacade.createGame(userToken, "Joinable Chess Game"));
+        assertDoesNotThrow(() -> serverFacade.joinGame(userToken, gameToJoin.getGameId(), "WHITE"));
     }
 
     @Test
-    void joinGameSlotTaken() {
-        var authToken=assertDoesNotThrow(() -> server.registerUser(user));
-        var game=assertDoesNotThrow(() -> server.createGame(authToken, "game"));
-        assertDoesNotThrow(() -> server.joinGame(authToken, game.getGameId(), "WHITE"));
-        var ex=assertThrows(ClientException.class, () -> server.joinGame(authToken, game.getGameId(), "WHITE"));
+    void testJoinGameWhenSlotIsOccupied() {
+        var authToken=assertDoesNotThrow(() -> serverFacade.registerUser(testUser));
+        var game=assertDoesNotThrow(() -> serverFacade.createGame(authToken, "game"));
+        assertDoesNotThrow(() -> serverFacade.joinGame(authToken, game.getGameId(), "WHITE"));
+        var ex=assertThrows(ClientException.class, () -> serverFacade.joinGame(authToken, game.getGameId(), "WHITE"));
         assertEquals("Error: already taken", ex.getMessage());
+
     }
 }

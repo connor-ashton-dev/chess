@@ -35,6 +35,7 @@ public class Server {
         Spark.staticFiles.location("web");
 
 
+        Spark.webSocket("/connect", WebsocketHandler.class);
         // create a game
         Spark.post("/game", this::createGame);
         // list games

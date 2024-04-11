@@ -304,4 +304,20 @@ public class SQLDAO implements DBInterface {
         if (tok == null) throw new DataAccessException("unauthorized");
         return tok;
     }
+
+    private AuthData authenticatedUser(AuthData authToken) throws DataAccessException {
+        try (var conn=DatabaseManager.getConnection()) {
+            var statement=changeSQLActionINfo("select username from %DB_NAME%.authTokens where authToken=?;");
+            Adapter<AuthData> tokenAdapter=rs -> new AuthData(authToken.getAuthToken(), rs.getString(1));
+            var results=dbExecute(statement, tokenAdapter, authToken.getAuthToken());
+            return results.isEmpty() ? null : results.getFirst();
+        } catch (SQLException ex) {
+            throw new DataAccessException(ex.getMessage());
+        }
+    }
+
+    public AuthData verifyAuthToken(AuthData authToken) throws DataAccessException {
+        if (authToken == null) throw new DataAccessException("unauthorized");
+        return authenticatedUser(authToken);
+    }
 }

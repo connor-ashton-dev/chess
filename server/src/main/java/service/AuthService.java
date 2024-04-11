@@ -21,4 +21,8 @@ public class AuthService {
     public void logout(AuthData tok) throws DataAccessException {
         dao.logoutUser(tok);
     }
+
+    public AuthData verifyAuthToken(AuthData tok) throws DataAccessException {
+        return dao.verifyAuthToken(tok);
+    }
 }

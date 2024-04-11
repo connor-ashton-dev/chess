@@ -1,19 +1,42 @@
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
+
+import chess.ChessGame;
+import chess.ChessMove;
+import chess.ChessPosition;
+import chess.InvalidMoveException;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
+import serverFacade.NotificationHandler;
 import serverFacade.ServerFacade;
+import serverFacade.WebSocketFacade;
 import ui.ChessboardUI;
 import ui.ClientException;
 
+import javax.websocket.ClientEndpoint;
+
 public class Main {
     private static ServerFacade serverFacade;
+    private static WebSocketFacade ws;
+    private static NotificationHandler notificationHandler;
+    private static ChessGame currentGame;
     private static AuthData authData = null; // Holds authentication data once logged in
+    private static ChessGame.TeamColor teamColor;
 
     public static void main(String[] args) {
         serverFacade = new ServerFacade("localhost", 8080);
+
+        // Initialize NotificationHandler
+         notificationHandler = new NotificationHandler() {
+            @Override
+            public void notify(String message) {
+                System.out.println("Notification: " + message);
+            }
+        };
+
+
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("Welcome to the Chess Game!");
@@ -39,7 +62,7 @@ public class Main {
                         register(params);
                         break;
                     case "login":
-                        login(params);
+                        login(params, notificationHandler);
                         break;
                     case "logout":
                         logout();
@@ -60,7 +83,15 @@ public class Main {
                         System.out.println("Exiting application.");
                         running = false;
                         break;
-                    case "help":
+                    case "leave":
+                        break;
+                    case "move":
+                        makeMove(params);
+                        break;
+                    case "resign":
+                        break;
+                    case "highlight":
+                        break;
                     default:
                         printHelp();
                         break;
@@ -71,6 +102,48 @@ public class Main {
         }
 
         scanner.close();
+        closeWebSocket();
+    }
+
+    private static void makeMove(String[] params) throws Exception {
+        if (params.length != 2) {
+            System.out.println("Usage: move <from> <to>");
+            return;
+        }
+        String from = params[0].toLowerCase();
+        String to = params[1].toLowerCase();
+        if (from.length() != 2 || to.length() != 2) throw new ClientException(400, "Expected: <file><rank> <file><rank>");
+
+        var positions=new ChessPosition[]{null, null};
+
+        var index=0;
+
+        for (var pos : new String[]{from, to}) {
+            var file=pos.charAt(0);
+            var rank=pos.charAt(1);
+
+            if (file < 97 || file > 104 || rank < 49 || rank > 56)
+                throw new ClientException(400, "Expected: <[a-h]><[1-8]> <[a-h]><[1-8]>");
+
+            positions[index++]=new ChessPosition(rank - 49, 7 - (file - 97));
+        }
+
+        try {
+            var piece=currentGame.getBoard().getPiece(positions[0]);
+
+            if (piece != null && (piece.getTeamColor() != teamColor)) {
+                throw new ClientException(400, "Wrong team piece!");
+            }
+
+            var move=new ChessMove(positions[0], positions[1], null);
+
+            currentGame.makeMove(move);
+            ws.makeMove(move);
+            System.out.println("sucessfully moved");
+        } catch (InvalidMoveException ex) {
+            var message= !ex.getMessage().isEmpty() ? ex.getMessage() : "Invalid move!";
+            throw new ClientException(400, message);
+        }
     }
 
     private static void register(String[] params) throws Exception {
@@ -92,7 +165,7 @@ public class Main {
         }
     }
 
-    private static void login(String[] params) throws Exception {
+    private static void login(String[] params, NotificationHandler notificationHandler) throws Exception {
         if (params.length != 3) {
             System.out.println("Usage: login <username> <password>");
             return;
@@ -103,6 +176,7 @@ public class Main {
         try {
             UserData userData = new UserData(username, password, email);
             authData = serverFacade.login(userData);
+
             System.out.println("Login successful.");
         } catch (ClientException e) {
             System.out.println("Login failed: " + e.getMessage());
@@ -118,6 +192,7 @@ public class Main {
         try {
             serverFacade.logout(authData);
             authData = null; // Clear authentication data
+            closeWebSocket();
             System.out.println("Logout successful.");
         } catch (ClientException e) {
             System.out.println("Logout failed: " + e.getMessage());
@@ -184,14 +259,12 @@ public class Main {
             System.out.println("Usage: join <gameID> <playerColor>");
             return;
         }
+        int gameID = Integer.parseInt(params[0]);
+        String playerColor = params[1];
         try {
-            int gameID = Integer.parseInt(params[0]); // Assuming gameID is the first parameter
-            String playerColor = params[1]; // Assuming playerColor is the second parameter
             serverFacade.joinGame(authData, gameID, playerColor);
-            ChessboardUI.draw(false);
-            ChessboardUI.draw(true);
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid game ID.");
+            ws.joinPlayer(gameID, playerColor.equals("white") ? ChessGame.TeamColor.WHITE : ChessGame.TeamColor.BLACK);
+            System.out.println("Joined game " + gameID + " as " + playerColor);
         } catch (ClientException e) {
             System.out.println("Failed to join game: " + e.getMessage());
         }
@@ -206,19 +279,13 @@ public class Main {
             System.out.println("Usage: observe <gameID>");
             return;
         }
+        int gameID = Integer.parseInt(params[0]);
         try {
-            int gameID = Integer.parseInt(params[0]); // Assuming gameID is the first parameter
-            if (serverFacade.observeGame(authData, gameID)){
-                ChessboardUI.draw(false);
-                ChessboardUI.draw(true);
-                System.out.println("Observed game successfully.");
-            }else{
-                System.out.println("Game not found");
-            }
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid game ID.");
+            serverFacade.observeGame(authData, gameID);
+            ws.joinObserver(gameID);
+            System.out.println(STR."Observing game \{gameID}");
         } catch (ClientException e) {
-            System.out.println("Failed to observe game: " + e.getMessage());
+            System.out.println(STR."Failed to observe game: \{e.getMessage()}");
         }
     }
 
@@ -229,4 +296,24 @@ public class Main {
             System.out.println("Available commands:\nlogout\nlist\ncreate <name>\njoin\nquit");
         }
     }
+
+    private static void initializeWebSocket(String url, AuthData authData){
+        try {
+            ws = new WebSocketFacade(url, notificationHandler, authData, new ChessboardUI());
+        } catch (ClientException e){
+            System.out.println(STR."Failed to initialize ws: \{e.getMessage()}");
+        }
+    }
+    private static void closeWebSocket() {
+        if (ws != null) {
+            try {
+                ws.close();
+                ws = null;
+            } catch (ClientException e ) {
+                System.out.println(STR."Failed to close ws: \{e.getMessage()}");
+            }
+        }
+    }
 }
+
+

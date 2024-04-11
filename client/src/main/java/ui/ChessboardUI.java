@@ -1,7 +1,12 @@
+package ui;
+
+
 import chess.ChessBoard;
 import chess.ChessGame;
 import chess.ChessPiece;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 
@@ -22,6 +27,35 @@ public class ChessboardUI {
                 chessPieces[i][j] = board[i][j].parseFromPiece();  // Translate the game's board state to UI's piece representation
             }
         }
+    }
+
+    public static String displayGame(ChessGame gameData, boolean isReversed) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos, true, StandardCharsets.UTF_8);
+
+        // Redirect all outputs to our PrintStream
+        ps.print(ERASE_SCREEN);
+
+        updateChessPiecesFromGame(gameData);  // Update board state from game
+        drawHeaders(ps, isReversed);          // Draw headers
+        drawBoard(ps, isReversed);            // Draw the board
+        drawHeaders(ps, isReversed);          // Draw headers again at the bottom
+        ps.println();
+        ps.println();
+
+        setBlackBackground(ps);
+        setWhiteText(ps);
+
+        // Convert output to String
+        String content = baos.toString(StandardCharsets.UTF_8);
+        ps.close();
+        try {
+            baos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return content;
     }
 
     public static void draw(boolean isReversed) {
@@ -204,4 +238,5 @@ public class ChessboardUI {
     private static void setBlueText(PrintStream out) {
         out.print(SET_TEXT_COLOR_BLUE);
     }
+
 }

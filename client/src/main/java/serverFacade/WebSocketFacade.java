@@ -30,7 +30,7 @@ public class WebSocketFacade extends Endpoint {
             this.messageFactory=new UserMessageBase(authToken);
 
             var container=ContainerProvider.getWebSocketContainer();
-            this.session=container.connectToServer(this, socketURI);
+            this.session= (Session) container.connectToServer(this, socketURI);
             this.notificationHandler=notificationHandler;
 
             session.addMessageHandler(new MessageHandler.Whole<String>() {
@@ -40,7 +40,7 @@ public class WebSocketFacade extends Endpoint {
                     switch (serverMessage.getServerMessageType()) {
                         case LOAD_GAME -> {
                             var gameMessage=fromJson(message, LoadGameMessage.class);
-                            notificationHandler.notify(client.displayGame(gameMessage.getGame()));
+                            notificationHandler.notify(ChessboardUI.displayGame(gameMessage.getGame(), true));
                         }
                         case ERROR -> {
                             var error=fromJson(message, ErrorMessage.class);
@@ -91,7 +91,7 @@ public class WebSocketFacade extends Endpoint {
         sendMessage(messageFactory.joinObserver(gameID));
     }
 
-    public void makeMove(MoveImple move) throws ClientException {
+    public void makeMove(ChessMove move) throws ClientException {
         sendMessage(messageFactory.makeMove(move));
     }
 

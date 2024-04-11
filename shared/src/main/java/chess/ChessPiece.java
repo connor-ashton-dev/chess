@@ -68,6 +68,17 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
 
+    public String parseFromPiece() {
+        return switch (this.pieceType) {
+            case PAWN -> this.color == ChessGame.TeamColor.WHITE ? "P" : "p";
+            case KNIGHT -> this.color == ChessGame.TeamColor.WHITE ? "N" : "n";
+            case BISHOP -> this.color == ChessGame.TeamColor.WHITE ? "B" : "b";
+            case ROOK -> this.color == ChessGame.TeamColor.WHITE ? "R" : "r";
+            case QUEEN -> this.color == ChessGame.TeamColor.WHITE ? "Q" : "q";
+            case KING -> this.color == ChessGame.TeamColor.WHITE ? "K" : "k";
+            default -> throw new IllegalStateException(STR."Unexpected value: \{this.pieceType}");
+        };
+    }
 
     public static ChessPiece parseFromString(char piece) {
         ChessPiece newPiece;

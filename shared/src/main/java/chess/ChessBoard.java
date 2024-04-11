@@ -116,6 +116,9 @@ public class ChessBoard {
         this.removePiece(start);
         this.addPiece(end, piece);
     }
+    public ChessPiece[][] getSquares (){
+        return this.squares;
+    }
 
 
     public Collection<ChessPiece> getPieces(ChessGame.TeamColor team) {

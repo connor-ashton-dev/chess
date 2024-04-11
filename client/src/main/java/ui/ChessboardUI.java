@@ -1,4 +1,6 @@
-package ui;
+import chess.ChessBoard;
+import chess.ChessGame;
+import chess.ChessPiece;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -10,6 +12,17 @@ public class ChessboardUI {
     private static final String EMPTY = "   ";
     private static final String[][] chessPieces = new String[BOARD_SIZE][BOARD_SIZE];
 
+
+    private static void updateChessPiecesFromGame(ChessGame game) {
+        ChessBoard chessBoard = game.getBoard();  // Assuming this method exists and returns the current board state
+        ChessPiece[][] board= chessBoard.getSquares();
+
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                chessPieces[i][j] = board[i][j].parseFromPiece();  // Translate the game's board state to UI's piece representation
+            }
+        }
+    }
 
     public static void draw(boolean isReversed) {
         var out = new PrintStream(System.out, true, StandardCharsets.UTF_8);
